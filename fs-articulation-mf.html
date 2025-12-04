@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Statement Articulation - BYUH Randomized Edition</title>
+    <style>
+        /* --- BYUH Color Palette --- */
+        /* Red (Crimson): #ba0c2f */
+        /* Gold: #c69214 */
+        /* Light Gold Accent: #fcf2e3 */
+        /* Lighter Gold Drop Zone: #f3e7c8 */
+
+        /* --- General & Mobile-First Styling --- */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0; 
+            padding: 10px;
+            background-color: #f4f7f6;
+        }
+
+        h1 {
+            color: #ba0c2f;
+            text-align: center;
+            font-size: 1.5em; 
+            margin-top: 10px;
+        }
+
+        /* Containers should be flexible */
+        #attempt-tracker, #activity-container {
+            width: 100%;
+            padding: 15px 10px;
+            box-sizing: border-box; 
+            margin: 10px auto;
+            border-radius: 6px;
+        }
+        
+        /* --- Attempt Tracker Styling --- */
+        #attempt-tracker {
+            background-color: #f9f9f9;
+            border: 1px dashed #c69214; 
+            text-align: center;
+        }
+
+        #attempt-tracker h3 {
+            color: #c69214;
+            font-size: 1.1em;
+        }
+
+        #score-history-table {
+            width: 95%; 
+            margin: 10px auto;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+        
+        /* --- Activity Container and Statement Layout --- */
+        #activity-container {
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .statement-section {
+            margin-bottom: 25px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .statement-section h2 {
+            color: #ba0c2f;
+            font-size: 1.3em;
+            margin-top: 0;
+            border-bottom: 2px solid #c69214;
+            padding-bottom: 5px;
+        }
+
+        .statement-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95em;
+        }
+
+        .statement-table td {
+            padding: 5px 0;
+            border-bottom: 1px dotted #eee;
+        }
+
+        .statement-table td:nth-child(1) {
+            width: 60%;
+            padding-left: 10px;
+        }
+        
+        /* Emphasize Subtotals/Totals */
+        .subtotal td {
+            font-weight: bold;
+            border-bottom: 2px solid #ccc !important;
+        }
+        .total td {
+            font-weight: bold;
+            border-top: 2px double #000;
+        }
+
+        /* Input Styling */
+        .statement-input {
+            width: 80px;
+            padding: 4px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            text-align: right;
+            font-family: inherit;
+        }
+        
+        /* Feedback Styling */
+        .correct {
+            background-color: #4CAF50 !important; 
+            color: white;
+            border-color: #4CAF50 !important;
+            font-weight: bold;
+        }
+
+        .incorrect {
+            border: 2px solid #f44336 !important;
+            background-color: #ffe0e0 !important;
+        }
+        
+        /* --- Button and Score Styles --- */
+        #submit-btn {
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: #c69214; 
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 90%; 
+            margin: 15px auto 0;
+            display: block;
+        }
+        
+        /* Floating Calculator Button */
+        #calculator-btn {
+            background-color: #ba0c2f; 
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 18px; 
+            cursor: pointer;
+            font-size: 1.1em;
+            
+            /* Floating styles */
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #score-container {
+            text-align: center;
+            padding: 10px;
+            background-color: #fcf2e3;
+            border: 1px solid #ba0c2f; 
+            border-radius: 6px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        /* --- Calculator Modal --- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100; /* Higher z-index for calculator */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 280px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover, .close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .calc-display {
+            width: 100%;
+            height: 40px;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+            text-align: right;
+            padding: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+        }
+        .calc-buttons button {
+            padding: 15px;
+            font-size: 1.1em;
+            border: none;
+            background-color: #eee;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .calc-buttons button:hover {
+            background-color: #ddd;
+        }
+        .calc-buttons .operator {
+            background-color: #c69214; 
+            color: white;
+        }
+        .calc-buttons .operator:hover {
+            background-color: #ba0c2f;
+        }
+
+        /* --- MEDIA QUERY for Tablet and Desktop (768px and up) --- */
+        @media (min-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            #attempt-tracker, #activity-container {
+                max-width: 750px;
+                padding: 25px;
+            }
+
+            #score-history-table {
+                width: 70%;
+                font-size: 1em;
+            }
+
+            .statement-table {
+                font-size: 1em;
+            }
+            
+            .statement-input {
+                width: 100px;
+                padding: 6px;
+            }
+
+            #submit-btn {
+                width: 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Financial Statement Articulation Challenge</h1>
+    <p style="text-align: center;">**Your assignment is unique!** Fill in the blank spaces to correctly articulate the statements. Amounts should be entered as numbers (e.g., 260000); commas will appear automatically.</p>
+
+    <button id="calculator-btn">Calculate 🧮</button>
+
+    <div id="attempt-tracker">
+        <h3>Attempt Tracker</h3>
+        <p>Current Attempt: <span id="current-attempt-display">0</span></p>
+        <div id="score-history-display">
+            </div>
+    </div>
+
+    <div id="activity-container">
+        
+        <div class="statement-section">
+            <h2>I. Income Statement <span style="font-size: 0.8em; font-weight: normal;">(For the Year Ended Dec 31, 20X5)</span></h2>
+            <table class="statement-table">
+                <tr><td>Service Revenue</td><td id="data-service-revenue" style="text-align: right;"></td></tr>
+                <tr><td>Interest Revenue</td><td id="data-interest-revenue" style="text-align: right;"></td></tr>
+                <tr class="subtotal"><td>Total Revenues</td><td style="text-align: right;"><input type="text" id="blank1" class="statement-input" placeholder="[BLANK 1]"></td></tr>
+                <tr><td colspan="2"><br></td></tr>
+                <tr><td>Salaries Expense</td><td id="data-salaries-expense" style="text-align: right;"></td></tr>
+                <tr><td>Rent Expense</td><td id="data-rent-expense" style="text-align: right;"></td></tr>
+                <tr><td>Supplies Expense</td><td id="data-supplies-expense" style="text-align: right;"></td></tr>
+                <tr class="subtotal"><td>Total Expenses</td><td style="text-align: right;"><input type="text" id="blank2" class="statement-input" placeholder="[BLANK 2]"></td></tr>
+                <tr><td colspan="2"><br></td></tr>
+                <tr class="total"><td>Net Income</td><td style="text-align: right;"><input type="text" id="blank3" class="statement-input" placeholder="[BLANK 3]"></td></tr>
+            </table>
+        </div>
+        
+        <div class="statement-section">
+            <h2>II. Statement of Retained Earnings <span style="font-size: 0.8em; font-weight: normal;">(For the Year Ended Dec 31, 20X5)</span></h2>
+            <table class="statement-table">
+                <tr><td>Retained Earnings, Jan 1, 20X5</td><td id="data-re-beg" style="text-align: right;"></td></tr>
+                <tr><td>Add: Net Income</td><td style="text-align: right;"><input type="text" id="blank4" class="statement-input" placeholder="[BLANK 4]"></td></tr>
+                <tr><td>Less: Dividends Declared</td><td id="data-dividends" style="text-align: right;"></td></tr>
+                <tr><td colspan="2"><br></td></tr>
+                <tr class="total"><td>Retained Earnings, Dec 31, 20X5</td><td style="text-align: right;"><input type="text" id="blank5" class="statement-input" placeholder="[BLANK 5]"></td></tr>
+            </table>
+        </div>
+
+        <div class="statement-section">
+            <h2>III. Balance Sheet <span style="font-size: 0.8em; font-weight: normal;">(As of December 31, 20X5)</span></h2>
+            <table class="statement-table">
+                <tr><td style="font-weight: bold;">ASSETS</td><td></td></tr>
+                <tr><td>Cash</td><td style="text-align: right;"><input type="text" id="blank6" class="statement-input" placeholder="[BLANK 6]"></td></tr>
+                <tr><td>Accounts Receivable</td><td id="data-ar" style="text-align: right;"></td></tr>
+                <tr><td>Equipment</td><td id="data-equipment" style="text-align: right;"></td></tr>
+                <tr class="total"><td>Total Assets</td><td style="text-align: right;"><input type="text" id="blank7" class="statement-input" placeholder="[BLANK 7]"></td></tr>
+                <tr><td colspan="2"><br></td></tr>
+
+                <tr><td style="font-weight: bold;">LIABILITIES</td><td></td></tr>
+                <tr><td>Accounts Payable</td><td id="data-ap" style="text-align: right;"></td></tr>
+                <tr><td>Notes Payable</td><td id="data-np" style="text-align: right;"></td></tr>
+                <tr class="subtotal"><td>Total Liabilities</td><td style="text-align: right;"><input type="text" id="blank8" class="statement-input" placeholder="[BLANK 8]"></td></tr>
+                <tr><td colspan="2"><br></td></tr>
+
+                <tr><td style="font-weight: bold;">STOCKHOLDERS' EQUITY</td><td></td></tr>
+                <tr><td>Common Stock</td><td id="data-cs" style="text-align: right;"></td></tr>
+                <tr><td>Retained Earnings</td><td style="text-align: right;"><input type="text" id="blank9" class="statement-input" placeholder="[BLANK 9]"></td></tr>
+                <tr class="subtotal"><td>Total Stockholders' Equity</td><td style="text-align: right;"><input type="text" id="blank10" class="statement-input" placeholder="[BLANK 10]"></td></tr>
+                <tr><td colspan="2"><br></td></tr>
+                
+                <tr class="total"><td>Total Liabilities & Stockholders' Equity</td><td style="text-align: right;"><input type="text" id="blank11" class="statement-input" placeholder="[BLANK 11]"></td></tr>
+            </table>
+        </div>
+
+        <button id="submit-btn">Submit and Check Answers</button>
+
+        <div id="score-container">
+            <h3>Your Results:</h3>
+            <p id="score-text"></p>
+        </div>
+
+    </div>
+
+    <div id="calculator-modal" class="modal" tabindex="0">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <input type="text" id="calc-display" class="calc-display" disabled value="0">
+            <div class="calc-buttons">
+                <button onclick="clearDisplay()">AC</button>
+                <button onclick="deleteLast()">DEL</button>
+                <button class="operator" onclick="appendOperator('/')">/</button>
+                <button class="operator" onclick="appendOperator('*')">*</button>
+                <button onclick="appendNumber('7')">7</button>
+                <button onclick="appendNumber('8')">8</button>
+                <button onclick="appendNumber('9')">9</button>
+                <button class="operator" onclick="appendOperator('-')">-</button>
+                <button onclick="appendNumber('4')">4</button>
+                <button onclick="appendNumber('5')">5</button>
+                <button onclick="appendNumber('6')">6</button>
+                <button class="operator" onclick="appendOperator('+')">+</button>
+                <button onclick="appendNumber('1')">1</button>
+                <button onclick="appendNumber('2')">2</button>
+                <button onclick="appendNumber('3')">3</button>
+                <button class="operator" onclick="calculateResult()">=</button>
+                <button onclick="appendNumber('0')">0</button>
+                <button onclick="appendNumber('.')">.</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Utility Functions ---
+        function formatNumberWithCommas(number) {
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function cleanNumber(value) {
+            return value.toString().replace(/,/g, '').replace(/[^0-9-.]/g, '');
+        }
+
+        // Function to generate a random number rounded to the nearest thousand
+        function getRandomThousand(min, max) {
+            // min and max must be thousands (e.g., 50000, 150000)
+            return Math.round((Math.random() * (max - min) + min) / 1000) * 1000;
+        }
+
+        // --- Data Generation and Calculation ---
+        let generatedData = {};
+        let correctAnswers = {};
+
+        function generateUniqueData() {
+            // I. Generate IS Inputs
+            const serviceRevenue = getRandomThousand(200000, 400000);
+            const interestRevenue = getRandomThousand(5000, 20000);
+            const salariesExpense = getRandomThousand(100000, 200000);
+            const rentExpense = getRandomThousand(20000, 60000);
+            const suppliesExpense = getRandomThousand(10000, 30000);
+            
+            // II. Generate SRE/BS Inputs
+            const reBeg = getRandomThousand(80000, 150000);
+            const dividends = getRandomThousand(10000, 30000);
+            const ar = getRandomThousand(50000, 100000);
+            const equipment = getRandomThousand(150000, 250000);
+            const ap = getRandomThousand(25000, 50000);
+            const np = getRandomThousand(80000, 150000);
+            const cs = getRandomThousand(40000, 80000);
+
+            // Ensure Net Income is positive, re-generate if needed
+            const totalRevenues = serviceRevenue + interestRevenue;
+            const totalExpenses = salariesExpense + rentExpense + suppliesExpense;
+            
+            if (totalRevenues <= totalExpenses) {
+                return generateUniqueData(); // Recursively call until Net Income is positive
+            }
+
+            // --- CALCULATE CORRECT ANSWERS (Articulation Flow) ---
+            
+            // IS Calculations
+            correctAnswers.blank1 = totalRevenues; // Total Revenues
+            correctAnswers.blank2 = totalExpenses; // Total Expenses
+            correctAnswers.blank3 = totalRevenues - totalExpenses; // Net Income (to SRE)
+
+            // SRE Calculations
+            correctAnswers.blank4 = correctAnswers.blank3; // Net Income (from IS)
+            const reEnd = reBeg + correctAnswers.blank4 - dividends;
+            correctAnswers.blank5 = reEnd; // Ending RE (to BS)
+
+            // BS Calculations
+            correctAnswers.blank8 = ap + np; // Total Liabilities
+            correctAnswers.blank9 = reEnd; // Retained Earnings (from SRE)
+            correctAnswers.blank10 = cs + correctAnswers.blank9; // Total Equity
+            correctAnswers.blank11 = correctAnswers.blank8 + correctAnswers.blank10; // Total L+E (Target for Assets)
+            correctAnswers.blank7 = correctAnswers.blank11; // Total Assets (Must equal L+E)
+            const cash = correctAnswers.blank7 - ar - equipment;
+            correctAnswers.blank6 = cash; // Cash (Plug figure)
+            
+            // If cash is negative (i.e., too much RE/Dividends/Expenses), re-generate
+            if (cash < 0) {
+                 return generateUniqueData();
+            }
+
+
+            // Store generated data
+            generatedData = {
+                serviceRevenue, interestRevenue, salariesExpense, rentExpense, suppliesExpense,
+                reBeg, dividends, ar, equipment, ap, np, cs
+            };
+        }
+        
+        // --- Populate the HTML table with generated data ---
+        function populateStatements() {
+            // Apply data to the fixed cells
+            document.getElementById('data-service-revenue').textContent = '$' + formatNumberWithCommas(generatedData.serviceRevenue);
+            document.getElementById('data-interest-revenue').textContent = '$' + formatNumberWithCommas(generatedData.interestRevenue);
+            document.getElementById('data-salaries-expense').textContent = '$' + formatNumberWithCommas(generatedData.salariesExpense);
+            document.getElementById('data-rent-expense').textContent = '$' + formatNumberWithCommas(generatedData.rentExpense);
+            document.getElementById('data-supplies-expense').textContent = '$' + formatNumberWithCommas(generatedData.suppliesExpense);
+            document.getElementById('data-re-beg').textContent = '$' + formatNumberWithCommas(generatedData.reBeg);
+            document.getElementById('data-dividends').textContent = '($' + formatNumberWithCommas(generatedData.dividends) + ')';
+            document.getElementById('data-ar').textContent = '$' + formatNumberWithCommas(generatedData.ar);
+            document.getElementById('data-equipment').textContent = '$' + formatNumberWithCommas(generatedData.equipment);
+            document.getElementById('data-ap').textContent = '$' + formatNumberWithCommas(generatedData.ap);
+            document.getElementById('data-np').textContent = '$' + formatNumberWithCommas(generatedData.np);
+            document.getElementById('data-cs').textContent = '$' + formatNumberWithCommas(generatedData.cs);
+
+            // Clear inputs and set correct answers as data attributes
+            document.querySelectorAll('.statement-input').forEach(input => {
+                input.value = '';
+                input.classList.remove('correct', 'incorrect');
+                input.disabled = false;
+                const blankId = input.id;
+                input.dataset.correct = correctAnswers[blankId];
+            });
+        }
+
+        // --- Core Game Logic ---
+        let attemptCount = 0;
+        const scoreHistory = [];
+        const totalBlanks = 11; // Always 11 blanks
+        
+        const submitBtn = document.getElementById('submit-btn');
+        const scoreContainer = document.getElementById('score-container');
+        const scoreText = document.getElementById('score-text');
+        const currentAttemptDisplay = document.getElementById('current-attempt-display');
+        const scoreHistoryDisplay = document.getElementById('score-history-display');
+
+        function initGame() {
+            generateUniqueData();
+            populateStatements();
+            submitBtn.addEventListener('click', handleSubmission);
+            updateAttemptTracker();
+            
+            // Attach formatting event listener to all input fields
+            document.querySelectorAll('.statement-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const cleanedValue = cleanNumber(e.target.value);
+                    if (cleanedValue !== "") {
+                        e.target.value = formatNumberWithCommas(cleanedValue);
+                    }
+                });
+            });
+            setupCalculatorKeyboardListener(); // Setup keyboard listener
+        }
+
+
+        // --- Submission Handler ---
+        function handleSubmission() {
+            if (submitBtn.textContent === 'Submit and Check Answers') {
+                attemptCount++; 
+                checkAnswers();
+                updateAttemptTracker(); 
+            } else {
+                resetGame();
+            }
+        }
+
+        // --- Check Answers and Score ---
+        function checkAnswers() {
+            let correctCount = 0;
+
+            document.querySelectorAll('.statement-input').forEach(input => {
+                const inputId = input.id;
+                const correctValue = parseInt(input.dataset.correct);
+                
+                const cleanedInput = cleanNumber(input.value);
+                const inputValue = parseInt(cleanedInput);
+
+                input.classList.remove('correct', 'incorrect');
+
+                if (inputValue === correctValue) {
+                    correctCount++;
+                    input.classList.add('correct');
+                    input.disabled = true;
+                } else if (cleanedInput !== "") {
+                    input.classList.add('incorrect');
+                    input.disabled = false;
+                } else {
+                    input.disabled = false;
+                }
+            });
+
+            // Record score history
+            const percentage = Math.round((correctCount / totalBlanks) * 100);
+            scoreHistory.push({ attempt: attemptCount, correct: correctCount, percentage: percentage });
+
+            // Provide Feedback
+            let feedbackMessage = `Score for Attempt ${attemptCount}: **${correctCount} out of ${totalBlanks}** (${percentage}%).<br>`;
+            
+            if (percentage === totalBlanks) {
+                feedbackMessage += '🎉 **Perfect!** You demonstrated full mastery of financial statement articulation!';
+            } else if (percentage >= 80) {
+                feedbackMessage += '👍 **Great!** Review your incorrect answers and focus on the linkages between the statements.';
+            } else {
+                feedbackMessage += '🧐 **Keep Practicing!** Ensure you are calculating the statements in order.';
+            }
+
+            scoreText.innerHTML = feedbackMessage;
+            scoreContainer.style.display = 'block';
+            submitBtn.textContent = 'Try Again (Reset Incorrect)';
+        }
+        
+        // --- Update Score Tracking Display ---
+        function updateAttemptTracker() {
+            currentAttemptDisplay.textContent = attemptCount;
+            
+            let tableHTML = '';
+            if (scoreHistory.length > 0) {
+                tableHTML = '<table id="score-history-table"><thead><tr><th>Attempt #</th><th>Correct Answers</th><th>Score (%)</th></tr></thead><tbody>';
+                scoreHistory.forEach(record => {
+                    tableHTML += `<tr><td>${record.attempt}</td><td>${record.correct} / ${totalBlanks}</td><td>${record.percentage}%</td></tr>`;
+                });
+                tableHTML += '</tbody></table>';
+            } else {
+                tableHTML = '<p>No attempts recorded yet.</p>';
+            }
+            scoreHistoryDisplay.innerHTML = tableHTML;
+        }
+
+        // --- Reset Function ---
+        function resetGame() {
+            scoreContainer.style.display = 'none';
+            scoreText.innerHTML = '';
+            
+            document.querySelectorAll('.statement-input').forEach(input => {
+                if (!input.classList.contains('correct')) {
+                    input.classList.remove('incorrect');
+                    input.disabled = false; 
+                }
+            });
+            
+            submitBtn.textContent = 'Submit and Check Answers';
+        }
+
+        // --- Calculator Logic (UPDATED for comma formatting and keyboard input) ---
+        const modal = document.getElementById("calculator-modal");
+        const btn = document.getElementById("calculator-btn");
+        const span = document.getElementsByClassName("close")[0];
+        const display = document.getElementById('calc-display');
+        let currentRawInput = '0';
+        let operator = null;
+        let firstOperand = null;
+        let waitingForSecondOperand = false;
+
+        function updateDisplay() {
+            if (currentRawInput.includes('.') && currentRawInput.indexOf('.') === currentRawInput.length - 1) {
+                display.value = formatNumberWithCommas(currentRawInput.slice(0, -1)) + '.';
+            } else {
+                display.value = formatNumberWithCommas(currentRawInput);
+            }
+        }
+
+        btn.onclick = function() {
+            modal.style.display = "block";
+            updateDisplay();
+            modal.focus(); // Focus the modal to capture keyboard events
+        }
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+        
+        function appendNumber(number) {
+            if (waitingForSecondOperand) {
+                currentRawInput = number === '.' ? '0.' : number;
+                waitingForSecondOperand = false;
+            } else {
+                if (currentRawInput === '0' && number !== '.') {
+                    currentRawInput = number;
+                } else if (number === '.' && currentRawInput.includes('.')) {
+                    return; 
+                } else {
+                    currentRawInput += number;
+                }
+            }
+            updateDisplay();
+        }
+
+        function appendOperator(nextOperator) {
+            const inputValue = parseFloat(currentRawInput);
+
+            if (firstOperand === null) {
+                firstOperand = inputValue;
+            } else if (operator) {
+                const result = performCalculation(firstOperand, inputValue, operator);
+                currentRawInput = String(result);
+                firstOperand = result;
+            }
+
+            waitingForSecondOperand = true;
+            operator = nextOperator;
+            updateDisplay();
+        }
+
+        function performCalculation(op1, op2, op) {
+            switch (op) {
+                case '+': return op1 + op2;
+                case '-': return op1 - op2;
+                case '*': return op1 * op2;
+                case '/': return op1 / op2;
+                default: return op2;
+            }
+        }
+
+        function calculateResult() {
+            if (firstOperand === null || operator === null || waitingForSecondOperand) {
+                return;
+            }
+            const inputValue = parseFloat(currentRawInput);
+            currentRawInput = String(performCalculation(firstOperand, inputValue, operator));
+            
+            if (currentRawInput.includes('.') && parseFloat(currentRawInput) === Math.round(parseFloat(currentRawInput))) {
+                currentRawInput = String(Math.round(parseFloat(currentRawInput)));
+            }
+            
+            firstOperand = null;
+            operator = null;
+            waitingForSecondOperand = true;
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            currentRawInput = '0';
+            firstOperand = null;
+            operator = null;
+            waitingForSecondOperand = false;
+            updateDisplay();
+        }
+
+        function deleteLast() {
+            if (waitingForSecondOperand) return;
+            currentRawInput = currentRawInput.slice(0, -1);
+            if (currentRawInput === '' || currentRawInput === '-') currentRawInput = '0';
+            updateDisplay();
+        }
+        
+        // New function to handle keyboard events
+        function setupCalculatorKeyboardListener() {
+            modal.addEventListener('keydown', function(e) {
+                if (modal.style.display !== 'block') return;
+
+                const key = e.key;
+
+                if (/[0-9]/.test(key)) {
+                    appendNumber(key);
+                } else if (key === '.') {
+                    appendNumber(key);
+                } else if (key === '+' || key === '-' || key === '*' || key === '/') {
+                    appendOperator(key);
+                } else if (key === 'Enter' || key === '=') {
+                    calculateResult();
+                    e.preventDefault(); // Prevent accidental form submission
+                } else if (key === 'Backspace' || key === 'Delete') {
+                    deleteLast();
+                    e.preventDefault();
+                } else if (key === 'Escape') {
+                    modal.style.display = "none";
+                }
+            });
+        }
+
+        // Start the game!
+        initGame();
+
+    </script>
+</body>
+</html>
