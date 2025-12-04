@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Account Classification Game - BYUH Edition</title>
+    <style>
+        /* --- BYUH Color Palette --- */
+        /* Red (Crimson): #ba0c2f */
+        /* Gold: #c69214 */
+        /* Light Gold Accent: #fcf2e3 */
+        /* Lighter Gold Drop Zone: #f3e7c8 */
+
+        /* --- General Styling --- */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f7f6;
+        }
+
+        h1 {
+            /* Uses BYUH Red */
+            color: #ba0c2f;
+            text-align: center;
+        }
+
+        /* --- Attempt Tracker Styling --- */
+        #attempt-tracker {
+            max-width: 1200px;
+            margin: 20px auto;
+            text-align: center;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px dashed #c69214; /* Uses BYUH Gold */
+            border-radius: 6px;
+        }
+        
+        #attempt-tracker h3 {
+            color: #c69214; /* Uses BYUH Gold */
+        }
+
+        #score-history-table {
+            width: 50%;
+            margin: 10px auto;
+            border-collapse: collapse;
+        }
+
+        #score-history-table th, #score-history-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        #score-history-table th {
+            background-color: #ba0c2f; /* Uses BYUH Red */
+            color: white;
+        }
+        
+        /* --- Game Layout --- */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Draggable Accounts List --- */
+        #accounts-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px;
+            border: 2px solid #ba0c2f;
+            border-radius: 6px;
+            background-color: #fcf2e3; 
+            min-height: 80px;
+        }
+
+        .account-card {
+            cursor: grab;
+            padding: 8px 15px;
+            background-color: #ba0c2f;
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 0.95em;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .account-card:hover {
+            background-color: #a00b28;
+        }
+
+        .dragging {
+            opacity: 0.5;
+            transform: scale(1.05);
+        }
+
+        /* --- Drop Zones (Categories) --- */
+        #categories-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+        }
+
+        .category-box {
+            border: 2px dashed #ccc;
+            border-radius: 6px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            min-height: 250px;
+            transition: border-color 0.3s;
+        }
+
+        .category-box h2 {
+            margin-top: 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+            color: #111;
+            text-align: center;
+        }
+
+        /* Highlight when an item is dragged over a zone */
+        .category-box.drag-over {
+            border-color: #ba0c2f;
+            background-color: #f3e7c8; 
+        }
+
+        /* --- Score and Feedback --- */
+        #score-container {
+            text-align: center;
+            padding: 15px;
+            background-color: #fcf2e3;
+            border: 1px solid #ba0c2f; 
+            border-radius: 6px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        #score-container h3 {
+            color: #ba0c2f;
+        }
+
+        .correct {
+            background-color: #4CAF50 !important; 
+        }
+
+        .incorrect {
+            background-color: #ba0c2f !important; 
+        }
+
+        /* --- Button Style --- */
+        #submit-btn {
+            padding: 12px 25px;
+            font-size: 1.1em;
+            background-color: #c69214; 
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: block;
+            width: 50%;
+            margin: 20px auto 0;
+        }
+
+        #submit-btn:hover {
+            background-color: #b58412; 
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Financial Account Classification Challenge</h1>
+    <p style="text-align: center;">Drag each account name to its correct financial statement category. Use the "Try Again" button to review and correct mistakes.</p>
+
+    <div id="attempt-tracker">
+        <h3>Attempt Tracker</h3>
+        <p>Current Attempt: <span id="current-attempt-display">0</span></p>
+        <div id="score-history-display">
+            </div>
+    </div>
+
+    <div id="game-container">
+        
+        <h2>Unsorted Accounts</h2>
+        <div id="accounts-list">
+            </div>
+
+        <div id="categories-container">
+            <div class="category-box" id="category-Asset">
+                <h2>Assets</h2>
+            </div>
+            <div class="category-box" id="category-Liability">
+                <h2>Liabilities</h2>
+            </div>
+            <div class="category-box" id="category-Equity">
+                <h2>Stockholders' Equity</h2>
+            </div>
+            <div class="category-box" id="category-Revenue">
+                <h2>Revenue</h2>
+            </div>
+            <div class="category-box" id="category-Expense">
+                <h2>Expenses</h2>
+            </div>
+        </div>
+
+        <button id="submit-btn">Submit and Check Answers</button>
+
+        <div id="score-container">
+            <h3>Your Results:</h3>
+            <p id="score-text"></p>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Game Data ---
+        const accountsData = [
+            { name: "Cash", type: "Asset" },
+            { name: "Accounts Receivable", type: "Asset" },
+            { name: "Equipment", type: "Asset" },
+            { name: "Prepaid Rent", type: "Asset" },
+            { name: "Accounts Payable", type: "Liability" },
+            { name: "Notes Payable", type: "Liability" },
+            { name: "Unearned Revenue", type: "Liability" },
+            { name: "Common Stock", type: "Equity" },
+            { name: "Retained Earnings", type: "Equity" },
+            { name: "Service Revenue", type: "Revenue" },
+            { name: "Sales Revenue", type: "Revenue" },
+            { name: "Rent Expense", type: "Expense" },
+            { name: "Salaries Expense", type: "Expense" },
+            { name: "Advertising Expense", type: "Expense" }
+        ];
+
+        // --- Tracking Variables ---
+        let attemptCount = 0;
+        const scoreHistory = [];
+        const totalAccounts = accountsData.length;
+
+        // --- DOM Elements ---
+        const accountsList = document.getElementById('accounts-list');
+        const submitBtn = document.getElementById('submit-btn');
+        const scoreContainer = document.getElementById('score-container');
+        const scoreText = document.getElementById('score-text');
+        const categoryBoxes = document.querySelectorAll('.category-box');
+        // Removed codeNameInput
+        const currentAttemptDisplay = document.getElementById('current-attempt-display');
+        const scoreHistoryDisplay = document.getElementById('score-history-display');
+
+
+        // --- Step 1: Initialize the Game ---
+        function initGame() {
+            accountsData.sort(() => Math.random() - 0.5);
+
+            accountsData.forEach((account, index) => {
+                const card = document.createElement('div');
+                card.className = 'account-card';
+                card.textContent = account.name;
+                card.setAttribute('draggable', true);
+                card.dataset.correctType = account.type; 
+                card.id = `account-${index}`;
+                accountsList.appendChild(card);
+            });
+
+            addEventListeners();
+            updateAttemptTracker();
+        }
+
+        // --- Step 2: Add Event Listeners ---
+        function addEventListeners() {
+            document.querySelectorAll('.account-card').forEach(card => {
+                card.addEventListener('dragstart', dragStart);
+                card.addEventListener('dragend', dragEnd);
+            });
+
+            categoryBoxes.forEach(box => {
+                box.addEventListener('dragover', dragOver);
+                box.addEventListener('dragleave', dragLeave);
+                box.addEventListener('drop', drop);
+            });
+            
+            submitBtn.addEventListener('click', handleSubmission);
+        }
+        
+        // --- Drag Functions ---
+        let draggedElement = null;
+
+        function dragStart(e) {
+            if (e.target.getAttribute('draggable') === 'true') {
+                draggedElement = e.target;
+                e.dataTransfer.setData('text/plain', draggedElement.id);
+                setTimeout(() => {
+                    draggedElement.classList.add('dragging');
+                }, 0);
+            } else {
+                e.preventDefault();
+            }
+        }
+
+        function dragEnd() {
+            if (draggedElement) {
+                draggedElement.classList.remove('dragging');
+                draggedElement = null;
+            }
+        }
+
+        // --- Drop Functions ---
+        function dragOver(e) {
+            e.preventDefault(); 
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function dragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            
+            const data = e.dataTransfer.getData('text/plain');
+            const card = document.getElementById(data);
+            
+            if (card) {
+                if (e.currentTarget.classList.contains('category-box') || e.currentTarget.id === 'accounts-list') {
+                     e.currentTarget.appendChild(card);
+                }
+            }
+        }
+        
+        // --- Submission Handler ---
+        function handleSubmission() {
+            if (submitBtn.textContent === 'Submit and Check Answers') {
+                // Removed code name check
+                attemptCount++; 
+                checkAnswers();
+                updateAttemptTracker(); 
+            } else {
+                resetGame();
+            }
+        }
+
+        // --- Check Answers and Score ---
+        function checkAnswers() {
+            // Removed studentCode variable
+            let correctCount = 0;
+
+            document.querySelectorAll('.account-card').forEach(card => {
+                const correctType = card.dataset.correctType;
+                const parentBoxId = card.parentElement.id;
+                
+                card.classList.remove('correct', 'incorrect');
+                card.setAttribute('draggable', true); 
+
+                if (parentBoxId !== 'accounts-list') {
+                    const droppedType = parentBoxId.replace('category-', '');
+
+                    if (droppedType === correctType) {
+                        correctCount++;
+                        card.classList.add('correct');
+                        card.setAttribute('draggable', false); 
+                    } else {
+                        card.classList.add('incorrect');
+                    }
+                }
+            });
+
+            // Record score history
+            const percentage = Math.round((correctCount / totalAccounts) * 100);
+            scoreHistory.push({ attempt: attemptCount, correct: correctCount, percentage: percentage });
+
+            // Provide Feedback
+            let feedbackMessage = `Score for Attempt ${attemptCount}: **${correctCount} out of ${totalAccounts}** (${percentage}%).<br>`;
+            
+            if (percentage === totalAccounts) {
+                feedbackMessage += '🎉 **Excellent Job!** You achieved 100% accuracy!';
+                // Removed codeNameInput.disabled = true;
+            } else if (percentage >= 70) {
+                feedbackMessage += '👍 **Good Effort!** Review the cards marked in red and try again.';
+            } else {
+                feedbackMessage += '🧐 **Keep Practicing!** Review the cards marked in red and try again.';
+            }
+
+            scoreText.innerHTML = feedbackMessage;
+            scoreContainer.style.display = 'block';
+            submitBtn.textContent = 'Try Again (Reset Incorrect)';
+        }
+        
+        // --- Update Score Tracking Display ---
+        function updateAttemptTracker() {
+            currentAttemptDisplay.textContent = attemptCount;
+            
+            let tableHTML = '';
+            if (scoreHistory.length > 0) {
+                tableHTML = '<table id="score-history-table"><thead><tr><th>Attempt #</th><th>Correct Answers</th><th>Score (%)</th></tr></thead><tbody>';
+                scoreHistory.forEach(record => {
+                    tableHTML += `<tr><td>${record.attempt}</td><td>${record.correct} / ${totalAccounts}</td><td>${record.percentage}%</td></tr>`;
+                });
+                tableHTML += '</tbody></table>';
+            } else {
+                tableHTML = '<p>No attempts recorded yet.</p>';
+            }
+            scoreHistoryDisplay.innerHTML = tableHTML;
+        }
+
+        // --- Reset Function ---
+        function resetGame() {
+            scoreContainer.style.display = 'none';
+            scoreText.innerHTML = '';
+            
+            document.querySelectorAll('.account-card').forEach(card => {
+                card.classList.remove('correct', 'incorrect');
+                card.setAttribute('draggable', true);
+            });
+            
+            submitBtn.textContent = 'Submit and Check Answers';
+        }
+
+
+        // Start the game!
+        initGame();
+
+    </script>
+</body>
+</html>
