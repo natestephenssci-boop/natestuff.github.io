@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Closing Process - BYUH Accounting</title>
+    <style>
+        :root {
+            --crimson: #ba0c2f;
+            --gold: #c69214;
+            --light-gold: #fcf2e3;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 { color: var(--crimson); text-align: center; margin-top: 10px; }
+        .instruction { text-align: center; font-size: 0.95em; max-width: 800px; margin: 0 auto 20px; }
+
+        /* --- Attempt Tracker (Top) --- */
+        #tracker-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--gold);
+            box-sizing: border-box;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .history-table th { background: #eee; padding: 8px; border-bottom: 2px solid var(--gold); }
+        .history-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+
+        /* --- Main Layout --- */
+        .main-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* --- Trial Balance (Left) --- */
+        #tb-container {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+            height: fit-content;
+        }
+
+        .tb-table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        .tb-table th { border-bottom: 2px solid var(--crimson); padding: 8px; color: var(--crimson); text-align: left; }
+        .tb-table td { padding: 5px 8px; border-bottom: 1px solid #eee; }
+        .num { text-align: right; font-family: monospace; }
+
+        /* --- Journal Table (Center) --- */
+        #journal-container {
+            flex: 2;
+            min-width: 350px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        .journal-table { width: 100%; border-collapse: collapse; }
+        .journal-table th { background-color: var(--crimson); color: white; padding: 10px; font-size: 0.8em; text-transform: uppercase; }
+        .journal-table td { padding: 4px; border: 1px solid #ddd; }
+
+        .acc-select, .dc-select, .amt-input {
+            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9em;
+        }
+
+        /* --- Floating Calculator (Upper Right Sticky) --- */
+        #calc-wrapper {
+            flex: 0 0 220px;
+        }
+
+        #calc-container {
+            width: 220px;
+            background: #333;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        #calc-display {
+            width: 100%;
+            background: #222;
+            color: #0f0;
+            text-align: right;
+            padding: 10px;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            min-height: 44px;
+        }
+
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .calc-grid button { 
+            padding: 12px 0; cursor: pointer; border: none; border-radius: 4px; 
+            background: #555; color: white; font-weight: bold; font-size: 1em;
+        }
+        .calc-grid button:hover { background: var(--gold); }
+        .calc-grid .btn-op { background: var(--gold); }
+
+        /* --- Feedback & Buttons --- */
+        .correct { background-color: #e6ffe6 !important; border-color: #4CAF50 !important; }
+        .incorrect { background-color: #ffe6e6 !important; border-color: #f44336 !important; }
+        
+        #submit-btn {
+            display: block; width: 100%; max-width: 400px; margin: 25px auto; padding: 15px;
+            background-color: var(--gold); color: white; border: none; border-radius: 6px;
+            font-size: 1.1em; font-weight: bold; cursor: pointer;
+        }
+
+        @media (max-width: 950px) {
+            .main-layout { flex-direction: column; }
+            #calc-wrapper { width: 100%; flex: none; }
+            #calc-container { position: relative; width: 100%; top: 0; margin-bottom: 20px; }
+            #tb-container { width: 100%; }
+            .journal-table th:nth-child(2), .journal-table td:nth-child(2) { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Closing Entry Challenge</h1>
+    <p class="instruction">
+        Review the Adjusted Trial Balance. Record the journal entries needed to close all temporary accounts the end of the accounting period. You may close the accounts separately or in groups, by account type.
+    </p>
+
+    <div id="tracker-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Attempt</th>
+                    <th>Revenues Closed</th>
+                    <th>Expenses Closed</th>
+                    <th>Dividends Closed</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="5">Identify temporary accounts and record entries below.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="main-layout">
+        <div id="tb-container">
+            <h3 style="text-align: center; color: var(--crimson); margin: 0 0 10px 0;">Adjusted Trial Balance</h3>
+            <table class="tb-table">
+                <thead><tr><th>Account</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
+                <tbody id="tb-body"></tbody>
+            </table>
+        </div>
+
+        <div id="journal-container">
+            <table class="journal-table">
+                <thead>
+                    <tr><th style="width: 45%;">Account Name</th><th style="width: 15%;">Type</th><th style="width: 40%;">Amount</th></tr>
+                </thead>
+                <tbody id="journal-body">
+                    </tbody>
+            </table>
+            <button id="submit-btn">Check Journal Entries</button>
+        </div>
+
+        <div id="calc-wrapper">
+            <div id="calc-container">
+                <div id="calc-display">0</div>
+                <div class="calc-grid">
+                    <button onclick="calcClear()">C</button>
+                    <button onclick="calcOp('/')" class="btn-op">÷</button>
+                    <button onclick="calcOp('*')" class="btn-op">×</button>
+                    <button onclick="calcClear()">Del</button>
+                    <button onclick="calcNum('7')">7</button><button onclick="calcNum('8')">8</button><button onclick="calcNum('9')">9</button>
+                    <button onclick="calcOp('-')" class="btn-op">−</button>
+                    <button onclick="calcNum('4')">4</button><button onclick="calcNum('5')">5</button><button onclick="calcNum('6')">6</button>
+                    <button onclick="calcOp('+')" class="btn-op">+</button>
+                    <button onclick="calcNum('1')">1</button><button onclick="calcNum('2')">2</button><button onclick="calcNum('3')">3</button>
+                    <button onclick="calcEq()" style="grid-row: span 2; background: var(--crimson);">=</button>
+                    <button onclick="calcNum('0')" style="grid-column: span 2;">0</button><button onclick="calcNum('.')">.</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const accountsList = ["Cash", "Accounts Receivable", "Supplies", "Equipment", "Accumulated Depreciation", "Accounts Payable", "Common Stock", "Retained Earnings", "Dividends", "Service Revenue", "Rent Revenue", "Salaries Expense", "Rent Expense", "Utilities Expense", "Supplies Expense"];
+        
+        let tbData = {};
+        let attemptCount = 0;
+        let isComplete = false;
+
+        function getRandom(min, max) { return Math.round((Math.random() * (max - min) + min) / 100) * 100; }
+
+        function setup() {
+            // Static values for the session so it doesn't reset on mistakes
+            tbData = {
+                "Cash": getRandom(7000, 14000),
+                "Equipment": 50000,
+                "Accumulated Depreciation": 10000,
+                "Accounts Payable": getRandom(3000, 6000),
+                "Common Stock": 25000,
+                "Retained Earnings": getRandom(10000, 15000),
+                "Dividends": getRandom(1000, 3000),
+                "Service Revenue": getRandom(45000, 65000),
+                "Rent Revenue": getRandom(2000, 5000),
+                "Salaries Expense": getRandom(14000, 22000),
+                "Rent Expense": getRandom(5000, 8000),
+                "Utilities Expense": getRandom(1000, 2000),
+                "Supplies Expense": getRandom(500, 1500)
+            };
+            renderTB();
+            renderJournal();
+        }
+
+        function renderTB() {
+            const body = document.getElementById('tb-body');
+            let html = "";
+            const order = ["Cash", "Equipment", "Accumulated Depreciation", "Accounts Payable", "Common Stock", "Retained Earnings", "Dividends", "Service Revenue", "Rent Revenue", "Salaries Expense", "Rent Expense", "Utilities Expense", "Supplies Expense"];
+            order.forEach(acc => {
+                const val = tbData[acc];
+                const isDebit = ["Cash", "Equipment", "Dividends", "Salaries Expense", "Rent Expense", "Utilities Expense", "Supplies Expense"].includes(acc);
+                html += `<tr><td>${acc}</td><td class="num">${isDebit ? '$'+val.toLocaleString() : ''}</td><td class="num">${!isDebit ? '$'+val.toLocaleString() : ''}</td></tr>`;
+            });
+            body.innerHTML = html;
+        }
+
+        function renderJournal() {
+            const body = document.getElementById('journal-body');
+            let options = accountsList.sort().map(a => `<option value="${a}">${a}</option>`).join('');
+            for (let i = 0; i < 15; i++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><select class="acc-select" id="acc-${i}"><option value="">--Select--</option>${options}</select></td>
+                    <td><select class="dc-select" id="dc-${i}"><option value="">--</option><option value="Debit">Debit</option><option value="Credit">Credit</option></select></td>
+                    <td><input type="text" class="amt-input" id="amt-${i}" placeholder="0"></td>
+                `;
+                body.appendChild(tr);
+            }
+            document.querySelectorAll('.amt-input').forEach(input => {
+                input.addEventListener('input', e => {
+                    let val = e.target.value.replace(/,/g, '');
+                    if(!isNaN(val) && val !== "") e.target.value = Number(val).toLocaleString();
+                });
+            });
+        }
+
+        // --- CALC LOGIC ---
+        let calcVal = "";
+        function calcNum(n) { calcVal += n; updateDisp(); }
+        function calcOp(op) { calcVal += " " + op + " "; updateDisp(); }
+        function calcClear() { calcVal = ""; updateDisp(); }
+        function updateDisp() { document.getElementById('calc-display').innerText = calcVal || "0"; }
+        function calcEq() { try { calcVal = eval(calcVal).toString(); updateDisp(); } catch { calcVal = "Error"; updateDisp(); calcVal = ""; } }
+
+        window.addEventListener('keydown', (e) => {
+            const active = document.activeElement.tagName;
+            if (active === 'INPUT' || active === 'SELECT') return; 
+            if (e.key >= '0' && e.key <= '9') calcNum(e.key);
+            if (['+', '-', '*', '/'].includes(e.key)) calcOp(e.key);
+            if (e.key === 'Enter') { e.preventDefault(); calcEq(); }
+            if (e.key === 'Backspace') { e.preventDefault(); calcClear(); }
+            if (e.key === '.') calcNum('.');
+        });
+
+        // --- FLEXIBLE GRADING ---
+        function grade() {
+            if(isComplete) { location.reload(); return; }
+            
+            attemptCount++;
+            const targets = {
+                "Service Revenue": { side: "Debit", val: tbData["Service Revenue"], current: 0 },
+                "Rent Revenue": { side: "Debit", val: tbData["Rent Revenue"], current: 0 },
+                "Salaries Expense": { side: "Credit", val: tbData["Salaries Expense"], current: 0 },
+                "Rent Expense": { side: "Credit", val: tbData["Rent Expense"], current: 0 },
+                "Utilities Expense": { side: "Credit", val: tbData["Utilities Expense"], current: 0 },
+                "Supplies Expense": { side: "Credit", val: tbData["Supplies Expense"], current: 0 },
+                "Dividends": { side: "Credit", val: tbData["Dividends"], current: 0 },
+                "RE_Dr": { side: "Debit", val: tbData["Salaries Expense"] + tbData["Rent Expense"] + tbData["Utilities Expense"] + tbData["Supplies Expense"] + tbData["Dividends"], current: 0 },
+                "RE_Cr": { side: "Credit", val: tbData["Service Revenue"] + tbData["Rent Revenue"], current: 0 }
+            };
+
+            // Pass 1: Sum Student Totals
+            for(let i=0; i<15; i++) {
+                const acc = document.getElementById(`acc-${i}`).value;
+                const dc = document.getElementById(`dc-${i}`).value;
+                const amt = parseInt(document.getElementById(`amt-${i}`).value.replace(/,/g, '')) || 0;
+                
+                if (targets[acc] && dc === targets[acc].side) targets[acc].current += amt;
+                if (acc === "Retained Earnings") {
+                    if (dc === "Debit") targets["RE_Dr"].current += amt;
+                    if (dc === "Credit") targets["RE_Cr"].current += amt;
+                }
+            }
+
+            // Pass 2: Evaluate Rows
+            let correctRows = 0;
+            for(let i=0; i<15; i++) {
+                const aEl = document.getElementById(`acc-${i}`);
+                const dEl = document.getElementById(`dc-${i}`);
+                const mEl = document.getElementById(`amt-${i}`);
+                const acc = aEl.value; const dc = dEl.value;
+                const amt = parseInt(mEl.value.replace(/,/g, '')) || 0;
+
+                if (!acc && amt === 0) continue;
+
+                let isCorrect = false;
+                // Flexible logic: if the total impact on this account/side matches TB, the individual line is correct
+                if (targets[acc] && dc === targets[acc].side && targets[acc].current === targets[acc].val) isCorrect = true;
+                if (acc === "Retained Earnings") {
+                    if (dc === "Debit" && targets["RE_Dr"].current === targets["RE_Dr"].val) isCorrect = true;
+                    if (dc === "Credit" && targets["RE_Cr"].current === targets["RE_Cr"].val) isCorrect = true;
+                }
+
+                [aEl, dEl, mEl].forEach(el => el.classList.remove('correct', 'incorrect'));
+                if (isCorrect) {
+                    [aEl, dEl, mEl].forEach(el => { el.classList.add('correct'); el.disabled = true; });
+                    correctRows++;
+                } else {
+                    [aEl, dEl, mEl].forEach(el => el.classList.add('incorrect'));
+                }
+            }
+
+            updateHistory(targets);
+        }
+
+        function updateHistory(t) {
+            const hBody = document.getElementById('history-body');
+            if(attemptCount === 1) hBody.innerHTML = "";
+            
+            const revOK = (t["Service Revenue"].current === t["Service Revenue"].val && t["Rent Revenue"].current === t["Rent Revenue"].val && t["RE_Cr"].current === t["RE_Cr"].val) ? "✅" : "❌";
+            const expOK = (t["Salaries Expense"].current === t["Salaries Expense"].val && t["Rent Expense"].current === t["Rent Expense"].val && t["Utilities Expense"].current === t["Utilities Expense"].val && t["Supplies Expense"].current === t["Supplies Expense"].val) ? "✅" : "❌";
+            const divOK = (t["Dividends"].current === t["Dividends"].val) ? "✅" : "❌";
+            
+            // Total score calculation based on the 3 core closing tasks + RE balance
+            const score = Math.round(((revOK === "✅" ? 1 : 0) + (expOK === "✅" ? 1 : 0) + (divOK === "✅" ? 1 : 0)) / 3 * 100);
+            
+            hBody.innerHTML = `<tr><td>${attemptCount}</td><td>${revOK}</td><td>${expOK}</td><td>${divOK}</td><td>${score}%</td></tr>` + hBody.innerHTML;
+            
+            if(score === 100) {
+                isComplete = true;
+                document.getElementById('submit-btn').textContent = "Excellent! Generate New Assignment";
+                document.getElementById('submit-btn').style.backgroundColor = "#2e7d32";
+            }
+        }
+
+        document.getElementById('submit-btn').onclick = grade;
+        setup();
+    </script>
+</body>
+</html>
