@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal Entries Challenge - BYUH Edition (Aligned)</title>
+    <style>
+        /* --- BYUH Color Palette --- */
+        /* Red (Crimson): #ba0c2f */
+        /* Gold: #c69214 */
+        /* Light Gold Accent: #fcf2e3 */
+        /* Lighter Gold Drop Zone: #f3e7c8 */
+
+        /* --- General & Mobile-First Styling --- */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0; 
+            padding: 10px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 {
+            color: #ba0c2f;
+            text-align: center;
+            font-size: 1.6em; 
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+
+        p.instruction {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* Containers should be flexible */
+        #attempt-tracker, #activity-container {
+            width: 100%;
+            padding: 15px 10px;
+            box-sizing: border-box; 
+            margin: 10px auto;
+            border-radius: 6px;
+        }
+
+        /* --- Attempt Tracker Styling --- */
+        #attempt-tracker {
+            background-color: #f9f9f9;
+            border: 1px dashed #c69214; 
+            text-align: center;
+        }
+
+        #attempt-tracker h3 {
+            color: #c69214;
+            font-size: 1.1em;
+        }
+
+        #score-history-table {
+            width: 95%; 
+            margin: 10px auto;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+
+        #score-history-table th, #score-history-table td {
+            border: 1px solid #ddd;
+            padding: 6px;
+        }
+
+        #score-history-table th {
+            background-color: #ba0c2f;
+            color: white;
+        }
+        
+        /* --- Activity Container Styling --- */
+        #activity-container {
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .transaction-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fcf2e3; /* Light Gold Accent */
+        }
+
+        .transaction-section h3 {
+            color: #ba0c2f;
+            font-size: 1.2em;
+            margin-top: 0;
+            border-bottom: 1px solid #c69214;
+            padding-bottom: 8px;
+        }
+
+        .transaction-description {
+            font-style: italic;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+        }
+
+        .journal-entry-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .journal-entry-table th {
+            background-color: #c69214;
+            color: white;
+            padding: 8px 5px;
+            text-align: center;
+            border: 1px solid #c69214;
+        }
+
+        .journal-entry-table td {
+            padding: 5px; /* Unified padding */
+            border: 1px solid #eee;
+            vertical-align: middle;
+        }
+        
+        /* *** REMOVED INDENTATION CSS ***
+        .journal-entry-table tr.credit-row td:nth-child(1) {
+            padding-left: 25px; 
+        }
+        */
+
+        /* Adjust width for mobile */
+        .journal-entry-table td:nth-child(1) { width: 40%; text-align: left; } /* Account */
+        .journal-entry-table td:nth-child(2) { width: 25%; text-align: center; } /* Debit/Credit Select */
+        .journal-entry-table td:nth-child(3) { width: 35%; text-align: right; } /* Amount Input */
+
+        /* Input and Select Styles */
+        .account-select, .amount-input, .dc-select {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            width: 100%;
+            font-size: 0.9em;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .amount-input {
+            text-align: right;
+        }
+
+        /* --- Feedback Styles --- */
+        .correct {
+            background-color: #e6ffe6; /* Light green for correct */
+            border-color: #4CAF50 !important;
+        }
+
+        .incorrect {
+            background-color: #ffe6e6; /* Light red for incorrect */
+            border: 2px solid #f44336 !important;
+        }
+
+        .summary-message {
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+            color: #ba0c2f;
+        }
+        .summary-message.correct {
+            color: #4CAF50;
+        }
+        
+        /* --- Score Container & Buttons --- */
+        #submit-btn {
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: #c69214; 
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 90%; 
+            margin: 15px auto 0;
+            display: block;
+            transition: background-color 0.3s;
+        }
+
+        #submit-btn:hover {
+            background-color: #b58412;
+        }
+
+        #score-container {
+            text-align: center;
+            padding: 10px;
+            background-color: #fcf2e3;
+            border: 1px solid #ba0c2f; 
+            border-radius: 6px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        /* --- MEDIA QUERY for Tablet and Desktop (768px and up) --- */
+        @media (min-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            #attempt-tracker, #activity-container {
+                max-width: 900px;
+                padding: 25px;
+            }
+
+            #score-history-table {
+                width: 70%;
+                font-size: 1em;
+            }
+
+            .transaction-section {
+                padding: 20px;
+            }
+
+            .journal-entry-table {
+                font-size: 1em;
+            }
+
+            .journal-entry-table td:nth-child(1) { width: 45%; }
+            .journal-entry-table td:nth-child(2) { width: 20%; }
+            .journal-entry-table td:nth-child(3) { width: 35%; }
+
+            .account-select, .amount-input, .dc-select {
+                padding: 8px;
+            }
+
+            #submit-btn {
+                width: 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Journal Entries Challenge</h1>
+    <p class="instruction">Record the following transactions by selecting the accounts, indicating debit or credit, and entering the correct amounts. Amounts should be entered as numbers (e.g., 25000).</p>
+
+    <div id="attempt-tracker">
+        <h3>Attempt Tracker</h3>
+        <p>Current Attempt: <span id="current-attempt-display">0</span></p>
+        <div id="score-history-display">
+            </div>
+    </div>
+
+    <div id="activity-container">
+
+        
+        <div class="transaction-section" id="transaction-1">
+            <h3>Transaction 1</h3>
+            <p class="transaction-description" id="desc-1"></p>
+            <table class="journal-entry-table">
+                <thead>
+                    <tr><th>Account</th><th>Dr/Cr</th><th>Amount</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><select class="account-select" id="acc1-1"></select></td>
+                        <td><select class="dc-select" id="dc1-1"></select></td>
+                        <td><input type="text" class="amount-input" id="amt1-1"></td>
+                    </tr>
+                    <tr class="credit-row">
+                        <td><select class="account-select" id="acc1-2"></select></td>
+                        <td><select class="dc-select" id="dc1-2"></select></td>
+                        <td><input type="text" class="amount-input" id="amt1-2"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="summary-message" id="summary-1"></p>
+        </div>
+
+        
+        <div class="transaction-section" id="transaction-2">
+            <h3>Transaction 2</h3>
+            <p class="transaction-description" id="desc-2"></p>
+            <table class="journal-entry-table">
+                <thead>
+                    <tr><th>Account</th><th>Dr/Cr</th><th>Amount</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><select class="account-select" id="acc2-1"></select></td>
+                        <td><select class="dc-select" id="dc2-1"></select></td>
+                        <td><input type="text" class="amount-input" id="amt2-1"></td>
+                    </tr>
+                    <tr class="credit-row">
+                        <td><select class="account-select" id="acc2-2"></select></td>
+                        <td><select class="dc-select" id="dc2-2"></select></td>
+                        <td><input type="text" class="amount-input" id="amt2-2"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="summary-message" id="summary-2"></p>
+        </div>
+
+        
+        <div class="transaction-section" id="transaction-3">
+            <h3>Transaction 3</h3>
+            <p class="transaction-description" id="desc-3"></p>
+            <table class="journal-entry-table">
+                <thead>
+                    <tr><th>Account</th><th>Dr/Cr</th><th>Amount</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><select class="account-select" id="acc3-1"></select></td>
+                        <td><select class="dc-select" id="dc3-1"></select></td>
+                        <td><input type="text" class="amount-input" id="amt3-1"></td>
+                    </tr>
+                    <tr class="credit-row">
+                        <td><select class="account-select" id="acc3-2"></select></td>
+                        <td><select class="dc-select" id="dc3-2"></select></td>
+                        <td><input type="text" class="amount-input" id="amt3-2"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="summary-message" id="summary-3"></p>
+        </div>
+
+        
+        <div class="transaction-section" id="transaction-4">
+            <h3>Transaction 4</h3>
+            <p class="transaction-description" id="desc-4"></p>
+            <table class="journal-entry-table">
+                <thead>
+                    <tr><th>Account</th><th>Dr/Cr</th><th>Amount</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><select class="account-select" id="acc4-1"></select></td>
+                        <td><select class="dc-select" id="dc4-1"></select></td>
+                        <td><input type="text" class="amount-input" id="amt4-1"></td>
+                    </tr>
+                    <tr class="credit-row">
+                        <td><select class="account-select" id="acc4-2"></select></td>
+                        <td><select class="dc-select" id="dc4-2"></select></td>
+                        <td><input type="text" class="amount-input" id="amt4-2"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="summary-message" id="summary-4"></p>
+        </div>
+
+        
+        <div class="transaction-section" id="transaction-5">
+            <h3>Transaction 5</h3>
+            <p class="transaction-description" id="desc-5"></p>
+            <table class="journal-entry-table">
+                <thead>
+                    <tr><th>Account</th><th>Dr/Cr</th><th>Amount</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><select class="account-select" id="acc5-1"></select></td>
+                        <td><select class="dc-select" id="dc5-1"></select></td>
+                        <td><input type="text" class="amount-input" id="amt5-1"></td>
+                    </tr>
+                    <tr class="credit-row">
+                        <td><select class="account-select" id="acc5-2"></select></td>
+                        <td><select class="dc-select" id="dc5-2"></select></td>
+                        <td><input type="text" class="amount-input" id="amt5-2"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="summary-message" id="summary-5"></p>
+        </div>
+
+        <button id="submit-btn">Submit Journal Entries</button>
+
+        <div id="score-container">
+            <h3>Your Overall Results:</h3>
+            <p id="score-text"></p>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Utility Functions ---
+        function formatNumberWithCommas(number) {
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function cleanNumber(value) {
+            return value.toString().replace(/,/g, '').replace(/[^0-9.]/g, '');
+        }
+
+        function getRandomAmount(min, max, multiple = 100) {
+            return Math.round((Math.random() * (max - min) + min) / multiple) * multiple;
+        }
+
+        // --- Account Lists ---
+        const allAccounts = [
+            "Cash", "Accounts Receivable", "Supplies", "Equipment", 
+            "Accounts Payable", "Notes Payable", "Unearned Revenue", 
+            "Common Stock", "Retained Earnings", "Dividends",
+            "Service Revenue", "Rent Expense", "Salaries Expense", "Utilities Expense"
+        ];
+
+        const dcOptions = ["---", "Debit", "Credit"];
+
+        // --- Transaction Data (Randomized Amounts) ---
+        const transactions = [
+            {
+                id: 1,
+                getDescription: (amt) => `Received cash for services to be provided later. Amount: $${formatNumberWithCommas(amt)}.`,
+                correct: {
+                    acc1: "Cash", dc1: "Debit", amt1: null,
+                    acc2: "Unearned Revenue", dc2: "Credit", amt2: null
+                },
+                amountRange: [2000, 10000]
+            },
+            {
+                id: 2,
+                getDescription: (amt) => `Paid current month's rent. Amount: $${formatNumberWithCommas(amt)}.`,
+                correct: {
+                    acc1: "Rent Expense", dc1: "Debit", amt1: null,
+                    acc2: "Cash", dc2: "Credit", amt2: null
+                },
+                amountRange: [1000, 3000]
+            },
+            {
+                id: 3,
+                getDescription: (amt) => `Provided services to customers on account. Amount: $${formatNumberWithCommas(amt)}.`,
+                correct: {
+                    acc1: "Accounts Receivable", dc1: "Debit", amt1: null,
+                    acc2: "Service Revenue", dc2: "Credit", amt2: null
+                },
+                amountRange: [5000, 15000]
+            },
+            {
+                id: 4,
+                getDescription: (amt) => `Purchased supplies on account. Amount: $${formatNumberWithCommas(amt)}.`,
+                correct: {
+                    acc1: "Supplies", dc1: "Debit", amt1: null,
+                    acc2: "Accounts Payable", dc2: "Credit", amt2: null
+                },
+                amountRange: [500, 2000]
+            },
+            {
+                id: 5,
+                getDescription: (amt) => `Issued common stock for cash. Amount: $${formatNumberWithCommas(amt)}.`,
+                correct: {
+                    acc1: "Cash", dc1: "Debit", amt1: null,
+                    acc2: "Common Stock", dc2: "Credit", amt2: null
+                },
+                amountRange: [10000, 30000]
+            }
+        ];
+
+        // --- Global State ---
+        let attemptCount = 0;
+        const scoreHistory = [];
+        const totalLineItems = transactions.length * 2; // Each transaction has 2 lines
+
+        // --- DOM Elements ---
+        const submitBtn = document.getElementById('submit-btn');
+        const scoreContainer = document.getElementById('score-container');
+        const scoreText = document.getElementById('score-text');
+        const currentAttemptDisplay = document.getElementById('current-attempt-display');
+        const scoreHistoryDisplay = document.getElementById('score-history-display');
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', initGame);
+
+        function initGame() {
+            populateAccountDropdowns();
+            generateTransactionAmounts();
+            populateTransactionDescriptions();
+            setupInputListeners();
+            submitBtn.addEventListener('click', handleSubmission);
+            updateAttemptTracker();
+        }
+
+        function populateAccountDropdowns() {
+            document.querySelectorAll('.account-select').forEach(select => {
+                select.innerHTML = '<option value="">--- Select Account ---</option>';
+                allAccounts.forEach(account => {
+                    const option = document.createElement('option');
+                    option.value = account;
+                    option.textContent = account;
+                    select.appendChild(option);
+                });
+            });
+
+            document.querySelectorAll('.dc-select').forEach(select => {
+                select.innerHTML = '';
+                dcOptions.forEach(optionText => {
+                    const option = document.createElement('option');
+                    option.value = optionText;
+                    option.textContent = optionText;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        function generateTransactionAmounts() {
+            transactions.forEach(t => {
+                const amount = getRandomAmount(t.amountRange[0], t.amountRange[1]);
+                t.correct.amt1 = amount;
+                t.correct.amt2 = amount;
+            });
+        }
+
+        function populateTransactionDescriptions() {
+            transactions.forEach(t => {
+                const descElement = document.getElementById(`desc-${t.id}`);
+                descElement.textContent = t.getDescription(t.correct.amt1);
+            });
+        }
+
+        function setupInputListeners() {
+            document.querySelectorAll('.amount-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const cleanedValue = cleanNumber(e.target.value);
+                    if (cleanedValue !== "") {
+                        e.target.value = formatNumberWithCommas(cleanedValue);
+                    }
+                });
+            });
+        }
+
+        // --- Submission & Scoring ---
+        function handleSubmission() {
+            if (submitBtn.textContent === 'Submit Journal Entries' || submitBtn.textContent.includes('Resubmit')) {
+                attemptCount++; 
+                checkAllTransactions();
+                updateAttemptTracker(); 
+            } else if (submitBtn.textContent === 'New Assignment') {
+                resetGame();
+                initGame(); // Re-initialize for new random numbers
+            }
+        }
+
+        function checkAllTransactions() {
+            let totalCorrectLineItems = 0;
+            let allTransactionsCorrect = true;
+
+            transactions.forEach(t => {
+                let transactionCorrect = true;
+                
+                const acc1 = document.getElementById(`acc${t.id}-1`);
+                const dc1 = document.getElementById(`dc${t.id}-1`);
+                const amt1 = document.getElementById(`amt${t.id}-1`);
+                
+                const acc2 = document.getElementById(`acc${t.id}-2`);
+                const dc2 = document.getElementById(`dc${t.id}-2`);
+                const amt2 = document.getElementById(`amt${t.id}-2`);
+
+                const summaryMessage = document.getElementById(`summary-${t.id}`);
+                summaryMessage.textContent = ''; // Clear previous message
+                summaryMessage.classList.remove('correct', 'incorrect');
+
+
+                // Check Line 1
+                let line1Correct = true;
+                if (acc1.value === t.correct.acc1) { acc1.classList.add('correct'); } else { acc1.classList.add('incorrect'); line1Correct = false; }
+                if (dc1.value === t.correct.dc1) { dc1.classList.add('correct'); } else { dc1.classList.add('incorrect'); line1Correct = false; }
+                if (parseInt(cleanNumber(amt1.value)) === t.correct.amt1) { amt1.classList.add('correct'); } else { amt1.classList.add('incorrect'); line1Correct = false; }
+                
+                if (line1Correct) {
+                    totalCorrectLineItems++;
+                    acc1.disabled = true; dc1.disabled = true; amt1.disabled = true;
+                } else {
+                    transactionCorrect = false;
+                    acc1.disabled = false; dc1.disabled = false; amt1.disabled = false;
+                }
+
+                // Check Line 2
+                let line2Correct = true;
+                if (acc2.value === t.correct.acc2) { acc2.classList.add('correct'); } else { acc2.classList.add('incorrect'); line2Correct = false; }
+                if (dc2.value === t.correct.dc2) { dc2.classList.add('correct'); } else { dc2.classList.add('incorrect'); line2Correct = false; }
+                if (parseInt(cleanNumber(amt2.value)) === t.correct.amt2) { amt2.classList.add('correct'); } else { amt2.classList.add('incorrect'); line2Correct = false; }
+
+                if (line2Correct) {
+                    totalCorrectLineItems++;
+                    acc2.disabled = true; dc2.disabled = true; amt2.disabled = true;
+                } else {
+                    transactionCorrect = false;
+                    acc2.disabled = false; dc2.disabled = false; amt2.disabled = false;
+                }
+                
+                // Check if amounts balance for this transaction (only if not already fully correct)
+                let debits = parseInt(cleanNumber(amt1.value)) || 0;
+                let credits = parseInt(cleanNumber(amt2.value)) || 0;
+                
+                // Simplified balance check: in this simple scenario, amt1 should always be the Debit amount, and amt2 the Credit amount.
+                // We just check if the entered amounts match the correct required amounts.
+                
+                if (!transactionCorrect) {
+                    // Check if the amounts entered match (required amounts must match, but this is a courtesy check for user if they swap debit/credit amounts)
+                    if (parseInt(cleanNumber(amt1.value)) !== parseInt(cleanNumber(amt2.value))) {
+                        summaryMessage.textContent = "Amounts do not balance (Debit amount ≠ Credit amount).";
+                        summaryMessage.classList.add('incorrect');
+                    } else if (debits === 0 && credits === 0 && (amt1.value !== "" || amt2.value !== "")) {
+                         summaryMessage.textContent = "Amounts are missing or invalid.";
+                         summaryMessage.classList.add('incorrect');
+                    }
+                    allTransactionsCorrect = false;
+                } else {
+                    summaryMessage.textContent = "Transaction Correct!";
+                    summaryMessage.classList.add('correct');
+                }
+            });
+
+            // Overall Score
+            const percentage = Math.round((totalCorrectLineItems / totalLineItems) * 100);
+            scoreHistory.push({ attempt: attemptCount, correct: totalCorrectLineItems, percentage: percentage });
+
+            let feedbackMessage = `Score for Attempt ${attemptCount}: **${totalCorrectLineItems} out of ${totalLineItems}** (${percentage}%).<br>`;
+            if (percentage === 100) {
+                feedbackMessage += '🎉 **Excellent!** All journal entries are correct!';
+                submitBtn.textContent = 'New Assignment';
+            } else {
+                feedbackMessage += '🧐 **Keep going!** Review the highlighted (incorrect) parts and try again.';
+                submitBtn.textContent = 'Resubmit Incorrect Entries';
+            }
+            scoreText.innerHTML = feedbackMessage;
+            scoreContainer.style.display = 'block';
+        }
+
+        function updateAttemptTracker() {
+            currentAttemptDisplay.textContent = attemptCount;
+            let tableHTML = '';
+            if (scoreHistory.length > 0) {
+                tableHTML = '<table id="score-history-table"><thead><tr><th>Attempt #</th><th>Correct Line Items</th><th>Score (%)</th></tr></thead><tbody>';
+                scoreHistory.forEach(record => {
+                    tableHTML += `<tr><td>${record.attempt}</td><td>${record.correct} / ${totalLineItems}</td><td>${record.percentage}%</td></tr>`;
+                });
+                tableHTML += '</tbody></table>';
+            } else {
+                tableHTML = '<p>No attempts recorded yet.</p>';
+            }
+            scoreHistoryDisplay.innerHTML = tableHTML;
+        }
+
+        function resetGame() {
+            scoreContainer.style.display = 'none';
+            scoreText.innerHTML = '';
+            
+            document.querySelectorAll('.account-select, .dc-select, .amount-input').forEach(element => {
+                element.classList.remove('correct', 'incorrect');
+                element.disabled = false;
+                if (element.tagName === 'SELECT') {
+                    element.value = ''; // Reset dropdowns
+                } else {
+                    element.value = ''; // Clear input fields
+                }
+            });
+
+            document.querySelectorAll('.summary-message').forEach(msg => {
+                msg.textContent = '';
+                msg.classList.remove('correct', 'incorrect');
+            });
+
+            submitBtn.textContent = 'Submit Journal Entries';
+        }
+
+    </script>
+</body>
+</html>
