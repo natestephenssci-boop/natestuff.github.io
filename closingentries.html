@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Closing Process - BYUH Accounting</title>
     <style>
         :root {
@@ -90,11 +90,8 @@
             width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9em;
         }
 
-        /* --- Floating Calculator (Upper Right Sticky) --- */
-        #calc-wrapper {
-            flex: 0 0 220px;
-        }
-
+        /* --- Floating Calculator --- */
+        #calc-wrapper { flex: 0 0 220px; }
         #calc-container {
             width: 220px;
             background: #333;
@@ -108,25 +105,12 @@
         }
 
         #calc-display {
-            width: 100%;
-            background: #222;
-            color: #0f0;
-            text-align: right;
-            padding: 10px;
-            box-sizing: border-box;
-            font-family: 'Courier New', monospace;
-            font-size: 1.2em;
-            margin-bottom: 10px;
-            border-radius: 4px;
-            border: 1px solid #444;
-            min-height: 44px;
+            width: 100%; background: #222; color: #0f0; text-align: right; padding: 10px; box-sizing: border-box;
+            font-family: 'Courier New', monospace; font-size: 1.2em; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; min-height: 44px;
         }
 
         .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-        .calc-grid button { 
-            padding: 12px 0; cursor: pointer; border: none; border-radius: 4px; 
-            background: #555; color: white; font-weight: bold; font-size: 1em;
-        }
+        .calc-grid button { padding: 12px 0; cursor: pointer; border: none; border-radius: 4px; background: #555; color: white; font-weight: bold; font-size: 1em; }
         .calc-grid button:hover { background: var(--gold); }
         .calc-grid .btn-op { background: var(--gold); }
 
@@ -145,7 +129,14 @@
             #calc-wrapper { width: 100%; flex: none; }
             #calc-container { position: relative; width: 100%; top: 0; margin-bottom: 20px; }
             #tb-container { width: 100%; }
-            .journal-table th:nth-child(2), .journal-table td:nth-child(2) { display: none; }
+        }
+
+        /* Mobile-friendly: allow journal to scroll horizontally if needed, enlarge tap targets */
+        @media (max-width: 600px) {
+            #journal-container { overflow-x: auto; }
+            .acc-select, .dc-select, .amt-input { font-size: 1rem; padding: 10px; }
+            .journal-table th { font-size: 0.85em; }
+            #submit-btn { max-width: 100%; }
         }
     </style>
 </head>
@@ -187,8 +178,7 @@
                 <thead>
                     <tr><th style="width: 45%;">Account Name</th><th style="width: 15%;">Type</th><th style="width: 40%;">Amount</th></tr>
                 </thead>
-                <tbody id="journal-body">
-                    </tbody>
+                <tbody id="journal-body"></tbody>
             </table>
             <button id="submit-btn">Check Journal Entries</button>
         </div>
@@ -200,7 +190,7 @@
                     <button onclick="calcClear()">C</button>
                     <button onclick="calcOp('/')" class="btn-op">÷</button>
                     <button onclick="calcOp('*')" class="btn-op">×</button>
-                    <button onclick="calcClear()">Del</button>
+                    <button onclick="calcBackspace()">Del</button>
                     <button onclick="calcNum('7')">7</button><button onclick="calcNum('8')">8</button><button onclick="calcNum('9')">9</button>
                     <button onclick="calcOp('-')" class="btn-op">−</button>
                     <button onclick="calcNum('4')">4</button><button onclick="calcNum('5')">5</button><button onclick="calcNum('6')">6</button>
@@ -215,7 +205,6 @@
 
     <script>
         const accountsList = ["Cash", "Accounts Receivable", "Supplies", "Equipment", "Accumulated Depreciation", "Accounts Payable", "Common Stock", "Retained Earnings", "Dividends", "Service Revenue", "Rent Revenue", "Salaries Expense", "Rent Expense", "Utilities Expense", "Supplies Expense"];
-        
         let tbData = {};
         let attemptCount = 0;
         let isComplete = false;
@@ -223,24 +212,37 @@
         function getRandom(min, max) { return Math.round((Math.random() * (max - min) + min) / 100) * 100; }
 
         function setup() {
-            // Static values for the session so it doesn't reset on mistakes
-            tbData = {
-                "Cash": getRandom(7000, 14000),
-                "Equipment": 50000,
-                "Accumulated Depreciation": 10000,
-                "Accounts Payable": getRandom(3000, 6000),
-                "Common Stock": 25000,
-                "Retained Earnings": getRandom(10000, 15000),
-                "Dividends": getRandom(1000, 3000),
-                "Service Revenue": getRandom(45000, 65000),
-                "Rent Revenue": getRandom(2000, 5000),
-                "Salaries Expense": getRandom(14000, 22000),
-                "Rent Expense": getRandom(5000, 8000),
-                "Utilities Expense": getRandom(1000, 2000),
-                "Supplies Expense": getRandom(500, 1500)
-            };
+            attemptCount = 0;
+            isComplete = false;
+            document.getElementById('submit-btn').textContent = "Check Journal Entries";
+            document.getElementById('submit-btn').style.backgroundColor = "var(--gold)";
+
+            // Ensure revenues > expenses + dividends for every instance
+            do {
+                tbData = {
+                    "Cash": getRandom(7000, 14000),
+                    "Equipment": 50000,
+                    "Accumulated Depreciation": 10000,
+                    "Accounts Payable": getRandom(3000, 6000),
+                    "Common Stock": 25000,
+                    "Retained Earnings": getRandom(10000, 15000),
+                    "Dividends": getRandom(1000, 3000),
+                    "Service Revenue": getRandom(45000, 65000),
+                    "Rent Revenue": getRandom(2000, 5000),
+                    "Salaries Expense": getRandom(14000, 22000),
+                    "Rent Expense": getRandom(5000, 8000),
+                    "Utilities Expense": getRandom(1000, 2000),
+                    "Supplies Expense": getRandom(500, 1500)
+                };
+                const revTotal = (tbData["Service Revenue"] || 0) + (tbData["Rent Revenue"] || 0);
+                const expTotal = (tbData["Salaries Expense"]||0) + (tbData["Rent Expense"]||0) + (tbData["Utilities Expense"]||0) + (tbData["Supplies Expense"]||0);
+                const divTotal = tbData["Dividends"]||0;
+                if (revTotal > (expTotal + divTotal)) break;
+            } while(true);
+
             renderTB();
-            renderJournal();
+            rebuildJournal();
+            document.getElementById('history-body').innerHTML = `<tr><td colspan="5">Identify temporary accounts and record entries below.</td></tr>`;
         }
 
         function renderTB() {
@@ -255,8 +257,9 @@
             body.innerHTML = html;
         }
 
-        function renderJournal() {
+        function rebuildJournal() {
             const body = document.getElementById('journal-body');
+            body.innerHTML = '';
             let options = accountsList.sort().map(a => `<option value="${a}">${a}</option>`).join('');
             for (let i = 0; i < 15; i++) {
                 const tr = document.createElement('tr');
@@ -269,108 +272,293 @@
             }
             document.querySelectorAll('.amt-input').forEach(input => {
                 input.addEventListener('input', e => {
-                    let val = e.target.value.replace(/,/g, '');
-                    if(!isNaN(val) && val !== "") e.target.value = Number(val).toLocaleString();
+                    let val = e.target.value.replace(/,/g, '').trim();
+                    if (val === "" || val === "-" || val === "." || val === "-.") return;
+                    if (!isNaN(val)) {
+                        const parts = val.split('.');
+                        if (parts.length > 1) {
+                            const intPart = parts[0] === "" ? "0" : Number(parts[0]).toLocaleString();
+                            e.target.value = intPart + '.' + parts.slice(1).join('');
+                        } else {
+                            e.target.value = Number(val).toLocaleString();
+                        }
+                    }
                 });
             });
         }
 
-        // --- CALC LOGIC ---
+        // --- CALC ---
         let calcVal = "";
         function calcNum(n) { calcVal += n; updateDisp(); }
-        function calcOp(op) { calcVal += " " + op + " "; updateDisp(); }
+        function calcOp(op) { if (calcVal.trim() === "") return; calcVal = calcVal.trim() + " " + op + " "; updateDisp(); }
         function calcClear() { calcVal = ""; updateDisp(); }
-        function updateDisp() { document.getElementById('calc-display').innerText = calcVal || "0"; }
-        function calcEq() { try { calcVal = eval(calcVal).toString(); updateDisp(); } catch { calcVal = "Error"; updateDisp(); calcVal = ""; } }
+        function calcBackspace() { if (calcVal.endsWith(" ")) calcVal = calcVal.slice(0, -1); calcVal = calcVal.slice(0, -1); updateDisp(); }
 
-        window.addEventListener('keydown', (e) => {
-            const active = document.activeElement.tagName;
-            if (active === 'INPUT' || active === 'SELECT') return; 
-            if (e.key >= '0' && e.key <= '9') calcNum(e.key);
-            if (['+', '-', '*', '/'].includes(e.key)) calcOp(e.key);
-            if (e.key === 'Enter') { e.preventDefault(); calcEq(); }
-            if (e.key === 'Backspace') { e.preventDefault(); calcClear(); }
-            if (e.key === '.') calcNum('.');
+        function updateDisp() {
+            const disp = document.getElementById('calc-display');
+            if (!calcVal) { disp.innerText = "0"; return; }
+            const tokens = calcVal.split(/(\s+)/);
+            const out = tokens.map(tok => {
+                if (tok.trim() === '') return tok;
+                if (/^[+\-*/]$/.test(tok.trim())) return ' ' + tok.trim() + ' ';
+                const cleaned = tok.replace(/,/g, '');
+                if (!isNaN(cleaned) && cleaned !== "") {
+                    if (cleaned.endsWith('.')) {
+                        const n = cleaned.slice(0, -1);
+                        if (n === "" || isNaN(n)) return cleaned;
+                        return Number(n).toLocaleString() + '.';
+                    }
+                    return Number(cleaned).toLocaleString();
+                }
+                return tok;
+            }).join('');
+            disp.innerText = out || "0";
+        }
+
+        function calcEq() {
+            try {
+                if (calcVal.trim() === "") return;
+                const expr = calcVal.replace(/×/g, '*').replace(/÷/g, '/');
+                if (!/^[0-9+\-*/().\s]+$/.test(expr)) { throw "Bad"; }
+                const raw = eval(expr);
+                const num = Number(raw);
+                if (isNaN(num)) throw "NaN";
+                calcVal = num.toString();
+                document.getElementById('calc-display').innerText = Number(calcVal).toLocaleString();
+            } catch (e) {
+                document.getElementById('calc-display').innerText = "Error";
+                calcVal = "";
+                setTimeout(updateDisp, 800);
+            }
+        }
+
+        // Keyboard support for calculator when not typing inside inputs/selects
+        document.addEventListener('keydown', function(e) {
+            const active = document.activeElement;
+            const activeTag = active && active.tagName ? active.tagName.toLowerCase() : '';
+            const isTyping = (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select');
+            if (isTyping) return;
+
+            if ((e.key >= '0' && e.key <= '9') || e.key === '.' ) { e.preventDefault(); calcNum(e.key); return; }
+            if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') { e.preventDefault(); calcOp(e.key); return; }
+            if (e.key === 'Enter') { e.preventDefault(); calcEq(); return; }
+            if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); calcBackspace(); return; }
+            if (e.key === 'c' || e.key === 'C') { e.preventDefault(); calcClear(); return; }
         });
 
-        // --- FLEXIBLE GRADING ---
-        function grade() {
-            if(isComplete) { location.reload(); return; }
-            
-            attemptCount++;
-            const targets = {
-                "Service Revenue": { side: "Debit", val: tbData["Service Revenue"], current: 0 },
-                "Rent Revenue": { side: "Debit", val: tbData["Rent Revenue"], current: 0 },
-                "Salaries Expense": { side: "Credit", val: tbData["Salaries Expense"], current: 0 },
-                "Rent Expense": { side: "Credit", val: tbData["Rent Expense"], current: 0 },
-                "Utilities Expense": { side: "Credit", val: tbData["Utilities Expense"], current: 0 },
-                "Supplies Expense": { side: "Credit", val: tbData["Supplies Expense"], current: 0 },
-                "Dividends": { side: "Credit", val: tbData["Dividends"], current: 0 },
-                "RE_Dr": { side: "Debit", val: tbData["Salaries Expense"] + tbData["Rent Expense"] + tbData["Utilities Expense"] + tbData["Supplies Expense"] + tbData["Dividends"], current: 0 },
-                "RE_Cr": { side: "Credit", val: tbData["Service Revenue"] + tbData["Rent Revenue"], current: 0 }
-            };
-
-            // Pass 1: Sum Student Totals
-            for(let i=0; i<15; i++) {
-                const acc = document.getElementById(`acc-${i}`).value;
-                const dc = document.getElementById(`dc-${i}`).value;
-                const amt = parseInt(document.getElementById(`amt-${i}`).value.replace(/,/g, '')) || 0;
-                
-                if (targets[acc] && dc === targets[acc].side) targets[acc].current += amt;
-                if (acc === "Retained Earnings") {
-                    if (dc === "Debit") targets["RE_Dr"].current += amt;
-                    if (dc === "Credit") targets["RE_Cr"].current += amt;
-                }
-            }
-
-            // Pass 2: Evaluate Rows
-            let correctRows = 0;
-            for(let i=0; i<15; i++) {
+        // --- GRADING LOGIC ---
+        function parseJournalEntries() {
+            const rows = [];
+            for (let i = 0; i < 15; i++) {
                 const aEl = document.getElementById(`acc-${i}`);
                 const dEl = document.getElementById(`dc-${i}`);
                 const mEl = document.getElementById(`amt-${i}`);
-                const acc = aEl.value; const dc = dEl.value;
-                const amt = parseInt(mEl.value.replace(/,/g, '')) || 0;
-
-                if (!acc && amt === 0) continue;
-
-                let isCorrect = false;
-                // Flexible logic: if the total impact on this account/side matches TB, the individual line is correct
-                if (targets[acc] && dc === targets[acc].side && targets[acc].current === targets[acc].val) isCorrect = true;
-                if (acc === "Retained Earnings") {
-                    if (dc === "Debit" && targets["RE_Dr"].current === targets["RE_Dr"].val) isCorrect = true;
-                    if (dc === "Credit" && targets["RE_Cr"].current === targets["RE_Cr"].val) isCorrect = true;
+                const acc = aEl ? aEl.value : "";
+                const dc = dEl ? dEl.value : "";
+                let amt = 0;
+                if (mEl && mEl.value) {
+                    const cleaned = mEl.value.replace(/,/g, '').trim();
+                    if (!isNaN(cleaned) && cleaned !== "") amt = Number(cleaned);
                 }
+                if (acc) rows.push({acc, dc, amt, accEl: aEl, dcEl: dEl, mEl: mEl, rowIdx: i});
+            }
 
-                [aEl, dEl, mEl].forEach(el => el.classList.remove('correct', 'incorrect'));
-                if (isCorrect) {
-                    [aEl, dEl, mEl].forEach(el => { el.classList.add('correct'); el.disabled = true; });
-                    correctRows++;
-                } else {
-                    [aEl, dEl, mEl].forEach(el => el.classList.add('incorrect'));
+            const perAccount = {};
+            let totalDebits = 0, totalCredits = 0;
+            rows.forEach(r => {
+                if (!perAccount[r.acc]) perAccount[r.acc] = {debits: 0, credits: 0, rows: []};
+                if (r.dc === "Debit") {
+                    perAccount[r.acc].debits += r.amt;
+                    totalDebits += r.amt;
+                } else if (r.dc === "Credit") {
+                    perAccount[r.acc].credits += r.amt;
+                    totalCredits += r.amt;
+                }
+                perAccount[r.acc].rows.push(r);
+            });
+            return { rows, perAccount, totalDebits, totalCredits };
+        }
+
+        function isClose(a,b, tol=0.5) { return Math.abs(a-b) <= tol; }
+
+        function grade() {
+            if (isComplete) { setup(); return; }
+            attemptCount++;
+
+            const revAccounts = ["Service Revenue", "Rent Revenue"];
+            const expAccounts = ["Salaries Expense", "Rent Expense", "Utilities Expense", "Supplies Expense"];
+            const divAccount = "Dividends";
+
+            const revTotal = revAccounts.reduce((s, a) => s + (tbData[a] || 0), 0);
+            const expTotal = expAccounts.reduce((s, a) => s + (tbData[a] || 0), 0);
+            const divTotal = tbData[divAccount] || 0;
+
+            const parsed = parseJournalEntries();
+
+            // Clear previous classes
+            for (let i = 0; i < 15; i++) {
+                const aEl = document.getElementById(`acc-${i}`);
+                const dEl = document.getElementById(`dc-${i}`);
+                const mEl = document.getElementById(`amt-${i}`);
+                [aEl, dEl, mEl].forEach(el => { if (el) { el.classList.remove('correct'); el.classList.remove('incorrect'); }});
+            }
+
+            // Row correctness map for scoring
+            const rowOk = new Map(); // rowIdx -> boolean
+
+            function markRow(r, ok) {
+                rowOk.set(r.rowIdx, ok);
+                [r.accEl, r.dcEl, r.mEl].forEach(el => {
+                    if (!el) return;
+                    el.classList.add(ok ? 'correct' : 'incorrect');
+                    el.classList.remove(ok ? 'incorrect' : 'correct');
+                });
+            }
+
+            // PASS 1: Temp accounts must be recorded correctly
+            const perAccountCorrect = {};
+
+            function checkTempAccount(acc) {
+                const p = parsed.perAccount[acc] || {debits:0, credits:0, rows:[]};
+                let ok = false;
+
+                if (revAccounts.includes(acc)) {
+                    ok = isClose((p.debits || 0), (tbData[acc] || 0));
+                } else if (expAccounts.includes(acc) || acc === divAccount) {
+                    ok = isClose((p.credits || 0), (tbData[acc] || 0));
+                }
+                perAccountCorrect[acc] = ok;
+
+                (p.rows || []).forEach(r => markRow(r, ok));
+            }
+
+            revAccounts.forEach(checkTempAccount);
+            expAccounts.forEach(checkTempAccount);
+            checkTempAccount(divAccount);
+
+            const revAllCorrect = revAccounts.every(a => perAccountCorrect[a] === true);
+            const expAllCorrect = expAccounts.every(a => perAccountCorrect[a] === true);
+            const divCorrect = (perAccountCorrect[divAccount] === true);
+
+            // Balance check (used for completion, not for row-score partial credit)
+            const balanced = isClose(parsed.totalDebits, parsed.totalCredits);
+
+            // PASS 1b: Net retained earnings check (completion gate)
+            const expectedRE = revTotal - expTotal - divTotal;   // credit to RE (positive)
+            const reP = parsed.perAccount["Retained Earnings"] || {debits:0, credits:0, rows:[]};
+            const studentRENet = (reP.credits || 0) - (reP.debits || 0);
+            const reNetMatches = isClose(studentRENet, expectedRE);
+
+            // PASS 2: Grade Retained Earnings rows by matching expected contributions
+            const contribs = [];
+            revAccounts.forEach(a => contribs.push({type: 'rev', val: +(tbData[a]||0), used:false}));
+            expAccounts.forEach(a => contribs.push({type: 'exp', val: -(tbData[a]||0), used:false}));
+            contribs.push({type: 'div', val: -(tbData[divAccount]||0), used:false});
+
+            const reRows = (reP.rows || []).map(r => ({
+                r,
+                val: (r.dc === "Credit") ? +r.amt : (r.dc === "Debit" ? -r.amt : 0),
+                matched: false
+            }));
+
+            function matchExactToAny() {
+                for (let i = 0; i < reRows.length; i++) {
+                    const rr = reRows[i];
+                    if (rr.matched) continue;
+                    const idx = contribs.findIndex(c => !c.used && isClose(c.val, rr.val));
+                    if (idx >= 0) {
+                        rr.matched = true;
+                        contribs[idx].used = true;
+                        markRow(rr.r, true);
+                    }
                 }
             }
 
-            updateHistory(targets);
-        }
+            function matchByTypeSum(type) {
+                const remaining = contribs.filter(c => !c.used && c.type === type);
+                if (!remaining.length) return;
 
-        function updateHistory(t) {
+                const sum = remaining.reduce((s,c)=> s + c.val, 0);
+                for (let i = 0; i < reRows.length; i++) {
+                    const rr = reRows[i];
+                    if (rr.matched) continue;
+                    if (isClose(rr.val, sum)) {
+                        rr.matched = true;
+                        remaining.forEach(c => c.used = true);
+                        markRow(rr.r, true);
+                        return;
+                    }
+                }
+            }
+
+            function matchAllRemaining() {
+                const remainingAll = contribs.filter(c => !c.used);
+                if (!remainingAll.length) return;
+
+                const allSum = remainingAll.reduce((s,c)=> s + c.val, 0);
+                for (let i = 0; i < reRows.length; i++) {
+                    const rr = reRows[i];
+                    if (rr.matched) continue;
+                    if (isClose(rr.val, allSum)) {
+                        rr.matched = true;
+                        remainingAll.forEach(c => c.used = true);
+                        markRow(rr.r, true);
+                        return;
+                    }
+                }
+            }
+
+            if (reRows.length) {
+                matchExactToAny();
+                matchByTypeSum('rev');
+                matchByTypeSum('exp');
+                matchByTypeSum('div');
+                matchAllRemaining();
+
+                // Any RE row not matched becomes incorrect (red) so nothing stays white
+                reRows.forEach(rr => {
+                    if (!rr.matched) markRow(rr.r, false);
+                });
+            }
+
+            // Any non-temp, non-RE rows that the student filled are incorrect (for row scoring)
+            parsed.rows.forEach(r => {
+                const isTemp = revAccounts.includes(r.acc) || expAccounts.includes(r.acc) || r.acc === divAccount;
+                const isRE = (r.acc === "Retained Earnings");
+                if (!isTemp && !isRE) {
+                    markRow(r, false);
+                }
+            });
+
+            // --------- PARTIAL CREDIT SCORE (ROW-BASED) ---------
+            // Score = % of filled rows that are correct (green).
+            // Blank rows (no account selected) are not counted.
+            const gradedRows = parsed.rows.map(r => r.rowIdx);
+            let correctCount = 0;
+            gradedRows.forEach(idx => { if (rowOk.get(idx) === true) correctCount++; });
+            const rowScore = gradedRows.length ? Math.round((correctCount / gradedRows.length) * 100) : 0;
+
+            // Attempt tracker checkmarks still reflect whether each category is fully correct (not partial)
+            const revMark = revAllCorrect ? "✅" : "❌";
+            const expMark = expAllCorrect ? "✅" : "❌";
+            const divMark = divCorrect ? "✅" : "❌";
+
             const hBody = document.getElementById('history-body');
-            if(attemptCount === 1) hBody.innerHTML = "";
-            
-            const revOK = (t["Service Revenue"].current === t["Service Revenue"].val && t["Rent Revenue"].current === t["Rent Revenue"].val && t["RE_Cr"].current === t["RE_Cr"].val) ? "✅" : "❌";
-            const expOK = (t["Salaries Expense"].current === t["Salaries Expense"].val && t["Rent Expense"].current === t["Rent Expense"].val && t["Utilities Expense"].current === t["Utilities Expense"].val && t["Supplies Expense"].current === t["Supplies Expense"].val) ? "✅" : "❌";
-            const divOK = (t["Dividends"].current === t["Dividends"].val) ? "✅" : "❌";
-            
-            // Total score calculation based on the 3 core closing tasks + RE balance
-            const score = Math.round(((revOK === "✅" ? 1 : 0) + (expOK === "✅" ? 1 : 0) + (divOK === "✅" ? 1 : 0)) / 3 * 100);
-            
-            hBody.innerHTML = `<tr><td>${attemptCount}</td><td>${revOK}</td><td>${expOK}</td><td>${divOK}</td><td>${score}%</td></tr>` + hBody.innerHTML;
-            
-            if(score === 100) {
+            if (attemptCount === 1) hBody.innerHTML = "";
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `<td>${attemptCount}</td><td>${revMark}</td><td>${expMark}</td><td>${divMark}</td><td>${rowScore}%</td>`;
+            hBody.insertAdjacentElement('afterbegin', newRow);
+
+            // Completion: everything correct + balanced + correct RE net + no incorrect filled rows
+            const anyIncorrectFilledRow = gradedRows.some(idx => rowOk.get(idx) === false);
+
+            if (!anyIncorrectFilledRow && revAllCorrect && expAllCorrect && divCorrect && balanced && reNetMatches) {
                 isComplete = true;
                 document.getElementById('submit-btn').textContent = "Excellent! Generate New Assignment";
                 document.getElementById('submit-btn').style.backgroundColor = "#2e7d32";
+            } else {
+                document.getElementById('submit-btn').textContent = "Try Again — Fix Incorrect Entries";
+                document.getElementById('submit-btn').style.backgroundColor = "#f57c00";
             }
         }
 
