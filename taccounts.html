@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Posting to T-Accounts — Practice</title>
+<style>
+  :root{
+    --crimson:#ba0c2f;
+    --gold:#c69214;
+    --bg:#f4f7f6;
+    --dark:#333;
+  }
+
+  body{
+    margin:0;
+    font-family:Segoe UI,Arial,sans-serif;
+    background:var(--bg);
+    color:#222;
+  }
+
+  .container{
+    max-width:1200px;
+    margin:14px auto;
+    padding:12px;
+  }
+
+  h1{
+    color:var(--crimson);
+    text-align:center;
+    margin:6px 0;
+  }
+
+  .instruction{
+    max-width:900px;
+    margin:6px auto 18px;
+    text-align:center;
+    font-size:0.95rem;
+  }
+
+  #tracker{
+    background:#fff;
+    border:1px dashed var(--gold);
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:14px;
+  }
+
+  .history-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:0.9rem;
+  }
+
+  .history-table th{
+    background:#faf7f2;
+    padding:8px;
+    border-bottom:2px solid var(--gold);
+  }
+
+  .history-table td{
+    padding:6px;
+    border-bottom:1px solid #eee;
+    text-align:center;
+  }
+
+  .layout{
+    display:flex;
+    gap:18px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+
+  .left,.right{
+    background:#fff;
+    border-radius:8px;
+    padding:14px;
+    box-sizing:border-box;
+  }
+
+  .left{
+    flex:1;
+    min-width:280px;
+    border:2px solid var(--gold);
+    max-width:420px;
+  }
+
+  .right{
+    flex:2;
+    min-width:300px;
+    max-width:820px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.06);
+  }
+
+  /* ===== JOURNAL ENTRIES ===== */
+
+  .journal-item{
+    padding:10px 6px;
+    border-bottom:1px solid #f1f1f1;
+  }
+
+  .journal-line{
+    display:flex;
+    justify-content:space-between;
+    font-family:Segoe UI,Arial,sans-serif;
+  }
+
+  /* Debit line: flush left (both name and amount together) */
+  .debit-line{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    padding-left:0;
+  }
+
+  /* Credit line: narrow and shifted right so name+amount move together */
+  .credit-line{
+    margin-left:28px;
+    width:calc(100% - 28px);
+    display:flex;
+    justify-content:space-between;
+  }
+
+  .journal-meta{
+    font-size:0.85rem;
+    color:#666;
+    margin-top:4px;
+  }
+
+  /* ===== T-ACCOUNTS ===== */
+
+  .taccounts{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+  }
+
+  .taccount{
+    border:1px solid #eee;
+    border-radius:8px;
+    padding:10px;
+    background:#fff;
+    position:relative;
+  }
+
+  .taccount h4{
+    margin:0 0 6px;
+    color:var(--crimson);
+    font-size:0.98rem;
+    text-align:center;
+  }
+
+  .t-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:0.95rem;
+    table-layout:fixed;
+    border-top:3px solid var(--dark);   /* top horizontal line */
+  }
+
+  .t-table thead th{
+    padding:6px;
+    text-align:center;
+    font-weight:700;
+  }
+
+  .t-table td{
+    padding:8px;
+    border-top:1px solid #f2f2f2;
+  }
+
+  .t-table td:first-child,
+  .t-table th:first-child{
+    border-right:3px solid var(--dark);  /* vertical middle divider */
+  }
+
+  .ending-row{
+    display:flex;
+    align-items:center;
+    margin-top:8px;
+    border-top:3px solid var(--dark);   /* bottom horizontal line (before ending) */
+    padding-top:8px;
+    gap:8px;
+  }
+
+  .ending-label{ flex:1; font-weight:700; }
+  .ending-side{ width:110px; }
+  .ending-amt{ width:140px; position:relative; }
+
+  .amt-in{
+    width:100%;
+    box-sizing:border-box;
+    padding:8px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    font-family:monospace;
+    text-align:right;
+  }
+
+  .sel-side{
+    width:100%;
+    padding:8px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    background:white;
+  }
+
+  .correct{ background:#e6ffe6 !important; border-color:#4caf50 !important; }
+  .incorrect{ background:#ffe6e6 !important; border-color:#f44336 !important; }
+
+  #submit-btn{
+    display:block;
+    margin:18px auto 8px;
+    padding:12px 18px;
+    background:var(--gold);
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    font-weight:700;
+    cursor:pointer;
+    max-width:420px;
+    width:100%;
+  }
+
+  .meta{
+    font-size:0.9rem;
+    color:#555;
+    margin-top:6px;
+    text-align:center;
+  }
+
+  /* mobile layout tweaks */
+  @media (max-width:900px){
+    .taccounts{grid-template-columns:1fr}
+    .left{order:2;width:100%}
+    .right{order:1;width:100%}
+  }
+
+  @media (max-width:600px){
+    .amt-in{font-size:1rem;padding:10px}
+    .ending-side{width:100px}
+    .ending-amt{width:120px}
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Posting Practice — T-Accounts</h1>
+  <p class="instruction">
+    Post each journal entry to the correct side of the T-accounts below.
+    Then compute the ending balance for each account. You may correct mistakes and resubmit as many times as needed.
+  </p>
+
+  <div id="tracker">
+    <table class="history-table">
+      <thead>
+        <tr><th>Attempt</th><th>Correct / Filled</th><th>Score</th></tr>
+      </thead>
+      <tbody id="history-body">
+        <tr><td colspan="3">Make your first attempt — then press “Check Postings”.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="layout">
+    <div class="left">
+      <h3 style="color:var(--crimson)">Journal Entries</h3>
+      <div id="journal-list"></div>
+    </div>
+
+    <div class="right">
+      <h3 style="color:var(--crimson)">T-Accounts</h3>
+      <div id="taccounts" class="taccounts"></div>
+
+      <button id="submit-btn">Check Postings</button>
+      <div class="meta">
+        Green = correct. Red = incorrect.  
+        Score is percent of filled fields that are correct.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Edits requested:
+   1) Calculator feature removed.
+   2) After scoring 100%, button generates a new version with new numbers.
+   No other changes.
+*/
+
+const TOL = 0.5;
+let attemptCount = 0;
+let isComplete = false;
+let journalEntries = [];
+let accounts = [];
+let expectedByAccount = {};
+
+function rnd(min,max){ return Math.round((Math.random()*(max-min)+min)/10)*10; }
+
+function createProblem(){
+  attemptCount=0; isComplete=false;
+  document.getElementById('history-body').innerHTML =
+    '<tr><td colspan="3">Make your first attempt — then press “Check Postings”.</td></tr>';
+  document.getElementById('submit-btn').textContent='Check Postings';
+  document.getElementById('submit-btn').style.background='var(--gold)';
+
+  journalEntries=[
+    {date:'Jan 3',desc:'Investment by owner',debit:'Cash',credit:'Common Stock',amt:rnd(3000,8000)},
+    {date:'Jan 8',desc:'Service provided for cash',debit:'Cash',credit:'Service Revenue',amt:rnd(1500,4200)},
+    {date:'Jan 12',desc:'Service on account',debit:'Accounts Receivable',credit:'Service Revenue',amt:rnd(1800,3500)},
+    {date:'Jan 20',desc:'Paid salaries',debit:'Salaries Expense',credit:'Cash',amt:rnd(700,2200)},
+    {date:'Jan 24',desc:'Purchased supplies on account',debit:'Supplies',credit:'Accounts Payable',amt:rnd(200,900)},
+    {date:'Jan 28',desc:'Collected from AR',debit:'Cash',credit:'Accounts Receivable',amt:rnd(400,1800)}
+  ];
+
+  buildAccounts();
+  renderJournal();
+  buildTAccounts();
+}
+
+function buildAccounts(){
+  accounts=[]; expectedByAccount={};
+  journalEntries.forEach(e=>{
+    if(!accounts.includes(e.debit)) accounts.push(e.debit);
+    if(!accounts.includes(e.credit)) accounts.push(e.credit);
+    if (!expectedByAccount[e.debit]) expectedByAccount[e.debit] = [];
+    if (!expectedByAccount[e.credit]) expectedByAccount[e.credit] = [];
+    expectedByAccount[e.debit].push(+e.amt);    // debit positive
+    expectedByAccount[e.credit].push(-e.amt);    // credit negative
+  });
+}
+
+function renderJournal(){
+  const out = document.getElementById('journal-list');
+  out.innerHTML = '';
+  journalEntries.forEach(e=>{
+    const div = document.createElement('div');
+    div.className = 'journal-item';
+    div.innerHTML = `
+      <div class="journal-line debit-line">
+        <span>${e.debit}</span>
+        <span>$${Number(e.amt).toLocaleString()}</span>
+      </div>
+      <div class="journal-line credit-line">
+        <span>${e.credit}</span>
+        <span>$${Number(e.amt).toLocaleString()}</span>
+      </div>
+      <div class="journal-meta">${e.date} — ${e.desc}</div>
+    `;
+    out.appendChild(div);
+  });
+}
+
+function buildTAccounts(){
+  const container = document.getElementById('taccounts');
+  container.innerHTML = '';
+  accounts.sort();
+  accounts.forEach(acc=>{
+    const postings = expectedByAccount[acc] ? expectedByAccount[acc].length : 1;
+    const key = acc.replace(/\s+/g,'_');
+
+    const card = document.createElement('div');
+    card.className = 'taccount';
+    card.id = `acct-${key}`;
+
+    const title = document.createElement('h4');
+    title.textContent = acc;
+    card.appendChild(title);
+
+    const tbl = document.createElement('table');
+    tbl.className = 't-table';
+    tbl.innerHTML = `<thead><tr><th style="width:50%">Debit</th><th style="width:50%">Credit</th></tr></thead>`;
+    const tbody = document.createElement('tbody');
+
+    const rowsToCreate = Math.max(2, postings+1);
+    for (let i=0;i<rowsToCreate;i++){
+      const tr = document.createElement('tr');
+      const tdD = document.createElement('td');
+      tdD.innerHTML = `<input inputmode="decimal" pattern="[0-9,]*" class="amt-in" id="inp-${key}-d-${i}" placeholder="">`;
+      const tdC = document.createElement('td');
+      tdC.innerHTML = `<input inputmode="decimal" pattern="[0-9,]*" class="amt-in" id="inp-${key}-c-${i}" placeholder="">`;
+      tr.appendChild(tdD); tr.appendChild(tdC);
+      tbody.appendChild(tr);
+    }
+    tbl.appendChild(tbody);
+    card.appendChild(tbl);
+
+    const endDiv = document.createElement('div');
+    endDiv.className = 'ending-row';
+    endDiv.innerHTML = `
+      <div class="ending-label">Ending Balance</div>
+      <div class="ending-side"><select class="sel-side" id="ending-side-${key}"><option value="Debit">Debit</option><option value="Credit">Credit</option></select></div>
+      <div class="ending-amt">
+        <input inputmode="decimal" pattern="[0-9,]*" class="amt-in" id="ending-amt-${key}" placeholder="">
+      </div>
+    `;
+    card.appendChild(endDiv);
+
+    container.appendChild(card);
+  });
+}
+
+/* Parsing & Grading */
+function parsePostings(){
+  const rows = [];
+  const endings = [];
+  accounts.forEach(acc=>{
+    const key = acc.replace(/\s+/g,'_');
+    const tbody = document.querySelector(`#acct-${key} table.t-table tbody`);
+    if (!tbody) return;
+    let i = 0;
+    while(true){
+      const dEl = document.getElementById(`inp-${key}-d-${i}`);
+      const cEl = document.getElementById(`inp-${key}-c-${i}`);
+      if (!dEl && !cEl) break;
+      if (dEl && dEl.value.trim() !== '') {
+        let raw = dEl.value.replace(/,/g,'').trim();
+        if (!(raw === '' || raw === '.' || raw === '-')) {
+          const amt = Number(raw);
+          if (!isNaN(amt)) rows.push({account:acc, side:'Debit', amt: amt, el: dEl});
+        }
+      }
+      if (cEl && cEl.value.trim() !== '') {
+        let raw = cEl.value.replace(/,/g,'').trim();
+        if (!(raw === '' || raw === '.' || raw === '-')) {
+          const amt = Number(raw);
+          if (!isNaN(amt)) rows.push({account:acc, side:'Credit', amt: amt, el: cEl});
+        }
+      }
+      i++;
+      if (i>50) break;
+    }
+    const endAmtEl = document.getElementById(`ending-amt-${key}`);
+    const endSideEl = document.getElementById(`ending-side-${key}`);
+    if (endAmtEl && endAmtEl.value.trim() !== '') {
+      let raw = endAmtEl.value.replace(/,/g,'').trim();
+      if (!(raw === '' || raw === '.' || raw === '-')) {
+        const amt = Number(raw);
+        if (!isNaN(amt)) endings.push({account:acc, side: endSideEl ? endSideEl.value : 'Debit', amt: amt, elAmt: endAmtEl, elSide: endSideEl});
+      }
+    }
+  });
+  return {rows, endings};
+}
+
+function close(a,b){ return Math.abs(a-b) <= TOL; }
+
+function markElementCorrect(el){ if(!el) return; el.classList.remove('incorrect'); el.classList.add('correct'); }
+function markElementIncorrect(el){ if(!el) return; el.classList.remove('correct'); el.classList.add('incorrect'); }
+function clearMarks(){
+  document.querySelectorAll('.amt-in').forEach(i=>{ i.classList.remove('correct'); i.classList.remove('incorrect'); });
+  document.querySelectorAll('.sel-side').forEach(s=>{ s.classList.remove('correct'); s.classList.remove('incorrect'); });
+}
+
+function grade(){
+  // Change: after 100%, clicking button generates a new problem (new numbers).
+  if (isComplete) { createProblem(); return; }
+
+  attemptCount++;
+  clearMarks();
+
+  const parsed = parsePostings();
+  const studentRows = parsed.rows;
+  const studentEndings = parsed.endings;
+
+  const expected = {};
+  Object.keys(expectedByAccount).forEach(acc=>{
+    expected[acc] = expectedByAccount[acc].map(v=>({val:v, used:false}));
+  });
+
+  let totalFilled = 0;
+  let totalCorrect = 0;
+
+  const perAccountStudent = {};
+  studentRows.forEach(s=>{
+    const signed = (s.side==='Debit') ? +s.amt : -s.amt;
+    if (!perAccountStudent[s.account]) perAccountStudent[s.account] = [];
+    perAccountStudent[s.account].push({val: signed, el: s.el});
+  });
+
+  accounts.forEach(acc=>{
+    const expectedList = expected[acc] || [];
+    const studs = perAccountStudent[acc] || [];
+
+    studs.forEach(s=>{
+      totalFilled++;
+      let matched = false;
+      for (let i=0;i<expectedList.length;i++){
+        const e = expectedList[i];
+        if (!e.used && close(e.val, s.val)) { e.used = true; matched = true; break; }
+      }
+      if (matched) { markElementCorrect(s.el); totalCorrect++; }
+      else markElementIncorrect(s.el);
+    });
+
+    const remainingExp = expectedList.filter(e=>!e.used).map(e=>e.val);
+    const remainingStudEls = studs.filter(s=>s.el.classList.contains('incorrect'));
+    if (remainingExp.length && remainingStudEls.length) {
+      const totalExpSum = remainingExp.reduce((a,b)=>a+b,0);
+      remainingStudEls.forEach(s=>{
+        if (close(s.val, totalExpSum)) {
+          markElementCorrect(s.el); totalCorrect++;
+          expectedList.forEach(e => { if (!e.used) e.used = true; });
+        }
+      });
+      if (remainingExp.length >= 2) {
+        const n = remainingExp.length;
+        for (let i=0;i<n;i++){
+          for (let j=i+1;j<n;j++){
+            const pairSum = remainingExp[i] + remainingExp[j];
+            remainingStudEls.forEach(s=>{
+              if (s.el.classList.contains('correct')) return;
+              if (close(s.val, pairSum)) {
+                markElementCorrect(s.el); totalCorrect++;
+                let marked = 0;
+                for (let k=0;k<expectedList.length && marked<2;k++){
+                  if (!expectedList[k].used && (close(expectedList[k].val, remainingExp[i]) || close(expectedList[k].val, remainingExp[j]))) {
+                    expectedList[k].used = true; marked++;
+                  }
+                }
+              }
+            });
+          }
+        }
+      }
+    }
+  });
+
+  // Grade endings
+  const expectedEnding = {};
+  Object.keys(expectedByAccount).forEach(acc=>{
+    const arr = expectedByAccount[acc] || [];
+    const sum = arr.reduce((s,v)=> s + v, 0);
+    expectedEnding[acc] = sum;
+  });
+
+  studentEndings.forEach(e=>{
+    totalFilled++;
+    const expectedVal = expectedEnding[e.account] || 0;
+    const studentSigned = (e.side === 'Debit') ? +e.amt : -e.amt;
+    if (close(studentSigned, expectedVal)) {
+      markElementCorrect(e.elAmt);
+      markElementCorrect(e.elSide);
+      totalCorrect++;
+    } else {
+      markElementIncorrect(e.elAmt);
+      markElementIncorrect(e.elSide);
+    }
+  });
+
+  const score = totalFilled ? Math.round((totalCorrect/totalFilled)*100) : 0;
+  const hBody = document.getElementById('history-body');
+  if (attemptCount===1) hBody.innerHTML = '';
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${attemptCount}</td><td>${totalCorrect} / ${totalFilled}</td><td>${score}%</td>`;
+  hBody.insertAdjacentElement('afterbegin', tr);
+
+  // Completion check
+  let allExpectedUsed = true;
+  Object.keys(expected).forEach(acc=>{
+    expected[acc].forEach(e => { if (!e.used) allExpectedUsed = false; });
+  });
+
+  const allEndingsCorrect = studentEndings.length === accounts.length && studentEndings.every(e=>{
+    const expectedVal = expectedEnding[e.account] || 0;
+    const studentSigned = (e.side === 'Debit') ? +e.amt : -e.amt;
+    return close(studentSigned, expectedVal);
+  });
+
+  const anyIncorrect = Array.from(document.querySelectorAll('.amt-in, .sel-side')).some(i => {
+    const v = (i.tagName.toLowerCase() === 'select') ? i.value : i.value.trim();
+    return v !== '' && (i.classList.contains('incorrect'));
+  });
+
+  if (allExpectedUsed && allEndingsCorrect && !anyIncorrect && score===100) {
+    isComplete = true;
+    document.getElementById('submit-btn').textContent = 'Excellent — New Problem';
+    document.getElementById('submit-btn').style.background = '#2e7d32';
+  } else {
+    document.getElementById('submit-btn').textContent = 'Try Again — Fix Incorrect Postings';
+    document.getElementById('submit-btn').style.background = '#f57c00';
+  }
+}
+
+// format numeric inputs with commas while typing
+document.addEventListener('input', function(e){
+  if (!e.target.classList || !e.target.classList.contains('amt-in')) return;
+  const raw = e.target.value.replace(/,/g,'').trim();
+  if (raw === '' || raw === '.' || raw === '-') return;
+  if (!isNaN(raw)) {
+    const parts = raw.split('.');
+    if (parts.length>1) {
+      const intPart = parts[0]==='' ? '0' : Number(parts[0]).toLocaleString();
+      e.target.value = intPart + '.' + parts.slice(1).join('');
+    } else {
+      e.target.value = Number(raw).toLocaleString();
+    }
+  }
+});
+
+// Hook up submit button
+document.getElementById('submit-btn').addEventListener('click', grade);
+
+// initialize
+createProblem();
+</script>
+</body>
+</html>
