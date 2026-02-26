@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Sales - BYUH Accounting</title>
+    <style>
+        :root {
+            --crimson: #ba0c2f;
+            --gold: #c69214;
+            --light-gold: #fcf2e3;
+            --success: #2e7d32;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 { color: var(--crimson); text-align: center; margin-top: 10px; }
+        .instruction { text-align: center; font-size: 0.95em; max-width: 800px; margin: 0 auto 20px; }
+
+        #tracker-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--gold);
+            box-sizing: border-box;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .history-table th { background: #eee; padding: 8px; border-bottom: 2px solid var(--gold); }
+        .history-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+
+        .main-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        #scenario-container {
+            flex: 1;
+            min-width: 320px;
+            background: white;
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+            height: fit-content;
+        }
+
+        .step-box {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #fff9f0;
+            border-left: 4px solid var(--gold);
+            font-size: 0.9em;
+        }
+
+        #journal-container {
+            flex: 2;
+            min-width: 380px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        .journal-table { width: 100%; border-collapse: collapse; }
+        .journal-table th { background-color: var(--crimson); color: white; padding: 10px; font-size: 0.8em; text-transform: uppercase; }
+        .journal-table td { padding: 4px; border: 1px solid #ddd; }
+
+        .acc-select, .dc-select, .amt-input {
+            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9em;
+        }
+
+        #calc-wrapper { flex: 0 0 220px; }
+        #calc-container {
+            width: 220px; background: #333; color: white; padding: 12px; border-radius: 8px;
+            position: sticky; top: 20px; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        #calc-display {
+            width: 100%; background: #222; color: #0f0; text-align: right; padding: 10px; box-sizing: border-box;
+            font-family: 'Courier New', monospace; font-size: 1.2em; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; min-height: 44px;
+        }
+
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .calc-grid button { padding: 12px 0; cursor: pointer; border: none; border-radius: 4px; background: #555; color: white; font-weight: bold; font-size: 1em; }
+        .calc-grid button:hover { background: var(--gold); }
+        .calc-grid .btn-op { background: var(--gold); }
+
+        .correct { background-color: #e6ffe6 !important; border-color: #4CAF50 !important; }
+        .incorrect { background-color: #ffe6e6 !important; border-color: #f44336 !important; }
+        
+        #submit-btn {
+            display: block; width: 100%; max-width: 400px; margin: 25px auto; padding: 15px;
+            background-color: var(--gold); color: white; border: none; border-radius: 6px;
+            font-size: 1.1em; font-weight: bold; cursor: pointer;
+        }
+
+        @media (max-width: 950px) {
+            .main-layout { flex-direction: column; }
+            #calc-wrapper { width: 100%; flex: none; }
+            #calc-container { position: relative; width: 100%; top: 0; margin-bottom: 20px; }
+            #scenario-container { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Inventory Sales Challenge</h1>
+    <p class="instruction">
+        Record the journal entries for the following transactions using the <strong>Perpetual Inventory Method</strong>. 
+        Remember that sales and returns under the perpetual method require <strong>two</strong> sets of entries.
+    </p>
+
+    <div id="tracker-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Attempt</th>
+                    <th>Sales Progress</th>
+                    <th>Returns/All.</th>
+                    <th>Collection</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="5">Complete the journal entries to begin tracking.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="main-layout">
+        <div id="scenario-container">
+            <h3 style="text-align: center; color: var(--crimson);">Sales Transaction Data</h3>
+            <div id="steps-content"></div>
+        </div>
+
+        <div id="journal-container">
+            <table class="journal-table">
+                <thead>
+                    <tr><th style="width: 45%;">Account Name</th><th style="width: 20%;">Type</th><th style="width: 35%;">Amount</th></tr>
+                </thead>
+                <tbody id="journal-body"></tbody>
+            </table>
+            <button id="submit-btn">Check My Work</button>
+        </div>
+
+        <div id="calc-wrapper">
+            <div id="calc-container">
+                <div id="calc-display">0</div>
+                <div class="calc-grid">
+                    <button onclick="calcClear()">C</button>
+                    <button onclick="calcOp('/')" class="btn-op">÷</button>
+                    <button onclick="calcOp('*')" class="btn-op">×</button>
+                    <button onclick="calcClear()">Del</button>
+                    <button onclick="calcNum('7')">7</button><button onclick="calcNum('8')">8</button><button onclick="calcNum('9')">9</button>
+                    <button onclick="calcOp('-')" class="btn-op">−</button>
+                    <button onclick="calcNum('4')">4</button><button onclick="calcNum('5')">5</button><button onclick="calcNum('6')">6</button>
+                    <button onclick="calcOp('+')" class="btn-op">+</button>
+                    <button onclick="calcNum('1')">1</button><button onclick="calcNum('2')">2</button><button onclick="calcNum('3')">3</button>
+                    <button onclick="calcEq()" style="grid-row: span 2; background: var(--crimson);">=</button>
+                    <button onclick="calcNum('0')" style="grid-column: span 2;">0</button><button onclick="calcNum('.')">.</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const accountsList = ["Inventory", "Accounts Receivable", "Cash", "Sales Revenue", "Cost of Goods Sold", "Delivery Expense", "Sales Discounts", "Sales Returns and Allowances"];
+        
+        let scenario = {};
+        let attemptCount = 0;
+        let isComplete = false;
+
+        function rand(min, max) { return Math.floor(Math.random() * (max - min + 1) + min); }
+
+        function setup() {
+            const salePrice = rand(40, 60) * 1000;
+            const costPct = 0.60;
+            const freight = rand(4, 9) * 100;
+            const returnPrice = rand(4, 8) * 500;
+            const allowancePrice = rand(2, 4) * 100;
+            const discRate = 0.02; 
+
+            scenario = {
+                sale: salePrice,
+                cost: salePrice * costPct,
+                terms: "2/10, n/30",
+                freight: freight,
+                returnPrice: returnPrice,
+                returnCost: returnPrice * costPct,
+                allowance: allowancePrice,
+                netAR: salePrice - returnPrice - allowancePrice,
+                discount: (salePrice - returnPrice - allowancePrice) * discRate,
+                cashReceived: (salePrice - returnPrice - allowancePrice) * (1 - discRate)
+            };
+
+            const stepsHtml = `
+                <div class="step-box"><strong>1. Nov 1:</strong> Sold inventory on account for $${scenario.sale.toLocaleString()} with terms ${scenario.terms}. The cost of the goods sold was $${scenario.cost.toLocaleString()}.</div>
+                <div class="step-box"><strong>2. Nov 2:</strong> Paid $${scenario.freight.toLocaleString()} cash for shipping costs (FOB Destination).</div>
+                <div class="step-box"><strong>3. Nov 5:</strong> Customer returned $${scenario.returnPrice.toLocaleString()} of goods. The cost of the returned goods was $${scenario.returnCost.toLocaleString()}.</div>
+                <div class="step-box"><strong>4. Nov 7:</strong> Granted a $${scenario.allowance.toLocaleString()} allowance to the customer for damaged goods they agreed to keep.</div>
+                <div class="step-box"><strong>5. Nov 10:</strong> Received full payment from the customer, who took the available discount.</div>
+            `;
+            document.getElementById('steps-content').innerHTML = stepsHtml;
+            renderJournal();
+        }
+
+        function renderJournal() {
+            const body = document.getElementById('journal-body');
+            body.innerHTML = "";
+            let options = accountsList.sort().map(a => `<option value="${a}">${a}</option>`).join('');
+            for (let i = 0; i < 15; i++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><select class="acc-select" id="acc-${i}"><option value="">--Select--</option>${options}</select></td>
+                    <td><select class="dc-select" id="dc-${i}"><option value="">--</option><option value="Debit">Debit</option><option value="Credit">Credit</option></select></td>
+                    <td><input type="text" class="amt-input" id="amt-${i}" placeholder="0"></td>
+                `;
+                body.appendChild(tr);
+            }
+            document.querySelectorAll('.amt-input').forEach(input => {
+                input.addEventListener('input', e => {
+                    let val = e.target.value.replace(/,/g, '');
+                    if(!isNaN(val) && val !== "") e.target.value = Number(val).toLocaleString();
+                });
+            });
+        }
+
+        // --- CALCULATOR & KEYBOARD ---
+        let calcVal = "";
+        function calcNum(n) { calcVal += n; updateDisp(); }
+        function calcOp(op) { calcVal += " " + op + " "; updateDisp(); }
+        function calcClear() { calcVal = ""; updateDisp(); }
+        
+        function updateDisp() { 
+            const parts = calcVal.split(' ');
+            const formatted = parts.map(p => {
+                if(!isNaN(p) && p !== "") return Number(p).toLocaleString();
+                return p;
+            }).join(' ');
+            document.getElementById('calc-display').innerText = formatted || "0"; 
+        }
+
+        function calcEq() { 
+            try { 
+                let res = eval(calcVal);
+                calcVal = res.toString(); 
+                updateDisp(); 
+            } catch { 
+                calcVal = "Error"; updateDisp(); calcVal = ""; 
+            } 
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
+            if (e.key >= '0' && e.key <= '9') calcNum(e.key);
+            if (['+', '-', '*', '/'].includes(e.key)) calcOp(e.key);
+            if (e.key === 'Enter') { e.preventDefault(); calcEq(); }
+            if (e.key === 'Backspace') { e.preventDefault(); calcClear(); }
+            if (e.key === '.') calcNum('.');
+        });
+
+        // --- GRADING ---
+        function grade() {
+            if(isComplete) { location.reload(); return; }
+            attemptCount++;
+
+            let scores = { sale: false, cogs: false, freight: false, ret: false, ret_cogs: false, all: false, collection: false };
+
+            for(let i=0; i<15; i++) {
+                const acc = document.getElementById(`acc-${i}`).value;
+                const dc = document.getElementById(`dc-${i}`).value;
+                const amt = parseInt(document.getElementById(`amt-${i}`).value.replace(/,/g, '')) || 0;
+                const els = [document.getElementById(`acc-${i}`), document.getElementById(`dc-${i}`), document.getElementById(`amt-${i}`)];
+
+                if(!acc) continue;
+                let rowCorrect = false;
+
+                // Sale entries
+                if(acc === "Accounts Receivable" && dc === "Debit" && amt === scenario.sale) { rowCorrect = true; scores.sale = true; }
+                if(acc === "Sales Revenue" && dc === "Credit" && amt === scenario.sale) { rowCorrect = true; }
+                if(acc === "Cost of Goods Sold" && dc === "Debit" && amt === scenario.cost) { rowCorrect = true; scores.cogs = true; }
+                if(acc === "Inventory" && dc === "Credit" && amt === scenario.cost) { rowCorrect = true; }
+
+                // Freight
+                if(acc === "Delivery Expense" && dc === "Debit" && amt === scenario.freight) { rowCorrect = true; scores.freight = true; }
+                if(acc === "Cash" && dc === "Credit" && amt === scenario.freight) { rowCorrect = true; }
+
+                // Returns
+                if(acc === "Sales Returns and Allowances" && dc === "Debit" && amt === scenario.returnPrice) { rowCorrect = true; scores.ret = true; }
+                if(acc === "Accounts Receivable" && dc === "Credit" && amt === scenario.returnPrice) { rowCorrect = true; }
+                if(acc === "Inventory" && dc === "Debit" && amt === scenario.returnCost) { rowCorrect = true; scores.ret_cogs = true; }
+                if(acc === "Cost of Goods Sold" && dc === "Credit" && amt === scenario.returnCost) { rowCorrect = true; }
+
+                // Allowance
+                if(acc === "Sales Returns and Allowances" && dc === "Debit" && amt === scenario.allowance) { rowCorrect = true; scores.all = true; }
+                if(acc === "Accounts Receivable" && dc === "Credit" && amt === scenario.allowance) { rowCorrect = true; }
+
+                // Collection
+                if(acc === "Cash" && dc === "Debit" && Math.abs(amt - scenario.cashReceived) < 2) { rowCorrect = true; scores.collection = true; }
+                if(acc === "Sales Discounts" && dc === "Debit" && Math.abs(amt - scenario.discount) < 2) { rowCorrect = true; }
+                if(acc === "Accounts Receivable" && dc === "Credit" && amt === scenario.netAR) { rowCorrect = true; }
+
+                els.forEach(el => el.classList.remove('correct', 'incorrect'));
+                if(rowCorrect) {
+                    els.forEach(el => { el.classList.add('correct'); el.disabled = true; });
+                } else {
+                    els.forEach(el => el.classList.add('incorrect'));
+                }
+            }
+
+            const earned = Object.values(scores).filter(v => v).length;
+            const score = Math.round((earned / 7) * 100);
+            
+            const hBody = document.getElementById('history-body');
+            if(attemptCount === 1) hBody.innerHTML = "";
+            const sProg = (scores.sale && scores.cogs) ? "✅" : "❌";
+            const rProg = (scores.ret && scores.ret_cogs && scores.all) ? "✅" : "❌";
+            const cProg = scores.collection ? "✅" : "❌";
+
+            hBody.innerHTML = `<tr><td>${attemptCount}</td><td>${sProg}</td><td>${rProg}</td><td>${cProg}</td><td>${score}%</td></tr>` + hBody.innerHTML;
+
+            const btn = document.getElementById('submit-btn');
+            if(score === 100) {
+                isComplete = true;
+                btn.textContent = "Mastered! Generate New Problem";
+                btn.style.backgroundColor = "var(--success)";
+            } else {
+                btn.textContent = "Try Again - Fix Your Errors";
+            }
+        }
+
+        document.getElementById('submit-btn').onclick = grade;
+        setup();
+    </script>
+</body>
+</html>
