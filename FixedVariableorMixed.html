@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cost Behavior Classification - BYUH Accounting</title>
+    <style>
+        :root {
+            --crimson: #ba0c2f;
+            --gold: #c69214;
+            --light-gold: #fcf2e3;
+            --success: #2e7d32;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 { color: var(--crimson); text-align: center; margin-top: 10px; }
+        .instruction { text-align: center; font-size: 0.95em; max-width: 800px; margin: 0 auto 20px; }
+
+        #tracker-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--gold);
+            box-sizing: border-box;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .history-table th { background: #eee; padding: 8px; border-bottom: 2px solid var(--gold); }
+        .history-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+
+        .main-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        #scenario-container {
+            flex: 1;
+            min-width: 320px;
+            background: white;
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+            height: fit-content;
+        }
+
+        .definition-box {
+            margin-bottom: 12px;
+            padding: 8px;
+            background: #fff9f0;
+            border-left: 4px solid var(--gold);
+            font-size: 0.85em;
+        }
+
+        #journal-container {
+            flex: 2;
+            min-width: 380px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        .journal-table { width: 100%; border-collapse: collapse; }
+        .journal-table th { background-color: var(--crimson); color: white; padding: 10px; font-size: 0.8em; text-transform: uppercase; }
+        .journal-table td { padding: 6px 4px; border: 1px solid #ddd; font-size: 0.9em; }
+
+        .acc-select, .amt-input {
+            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9em;
+        }
+
+        #calc-wrapper { flex: 0 0 220px; }
+        #calc-container {
+            width: 220px; background: #333; color: white; padding: 12px; border-radius: 8px;
+            position: sticky; top: 20px; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        #calc-display {
+            width: 100%; background: #222; color: #0f0; text-align: right; padding: 10px; box-sizing: border-box;
+            font-family: 'Courier New', monospace; font-size: 1.2em; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; min-height: 44px;
+        }
+
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .calc-grid button { padding: 12px 0; cursor: pointer; border: none; border-radius: 4px; background: #555; color: white; font-weight: bold; font-size: 1em; }
+        .calc-grid button:hover { background: var(--gold); }
+        .calc-grid .btn-op { background: var(--gold); }
+
+        .correct { background-color: #e6ffe6 !important; border-color: #4CAF50 !important; }
+        .incorrect { background-color: #ffe6e6 !important; border-color: #f44336 !important; }
+        
+        #submit-btn {
+            display: block; width: 100%; max-width: 400px; margin: 25px auto; padding: 15px;
+            background-color: var(--gold); color: white; border: none; border-radius: 6px;
+            font-size: 1.1em; font-weight: bold; cursor: pointer;
+        }
+
+        @media (max-width: 950px) {
+            .main-layout { flex-direction: column; }
+            #calc-wrapper { width: 100%; flex: none; }
+            #calc-container { position: relative; width: 100%; top: 0; margin-bottom: 20px; }
+            #scenario-container { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Cost Behavior Classification Challenge</h1>
+    <p class="instruction">
+        Review each cost item and behavior description below. Classify each cost as a <strong>Fixed Cost</strong>, <strong>Variable Cost</strong>, or <strong>Mixed Cost</strong>.
+    </p>
+
+    <div id="tracker-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Attempt</th>
+                    <th>Correct Classifications</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="3">Complete the classifications below to start tracking progress.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="main-layout">
+        <div id="scenario-container">
+            <h3 style="text-align: center; color: var(--crimson); margin-top:0;">Quick Reference</h3>
+            <div class="definition-box"><strong>Fixed Cost:</strong> Total cost remains constant regardless of changes in the level of activity.</div>
+            <div class="definition-box"><strong>Variable Cost:</strong> Total cost changes in direct proportion to changes in activity level.</div>
+            <div class="definition-box"><strong>Mixed Cost:</strong> Contains both a fixed component and a variable component that changes with activity.</div>
+        </div>
+
+        <div id="journal-container">
+            <table class="journal-table">
+                <thead>
+                    <tr><th style="width: 55%;">Cost Item & Description</th><th style="width: 45%;">Cost Classification</th></tr>
+                </thead>
+                <tbody id="journal-body"></tbody>
+            </table>
+            <button id="submit-btn">Check My Work</button>
+        </div>
+
+        <div id="calc-wrapper">
+            <div id="calc-container">
+                <div id="calc-display">0</div>
+                <div class="calc-grid">
+                    <button onclick="calcClear()">C</button>
+                    <button onclick="calcOp('/')" class="btn-op">÷</button>
+                    <button onclick="calcOp('*')" class="btn-op">×</button>
+                    <button onclick="calcClear()">Del</button>
+                    <button onclick="calcNum('7')">7</button><button onclick="calcNum('8')">8</button><button onclick="calcNum('9')">9</button>
+                    <button onclick="calcOp('-')" class="btn-op">−</button>
+                    <button onclick="calcNum('4')">4</button><button onclick="calcNum('5')">5</button><button onclick="calcNum('6')">6</button>
+                    <button onclick="calcOp('+')" class="btn-op">+</button>
+                    <button onclick="calcNum('1')">1</button><button onclick="calcNum('2')">2</button><button onclick="calcNum('3')">3</button>
+                    <button onclick="calcEq()" style="grid-row: span 2; background: var(--crimson);">=</button>
+                    <button onclick="calcNum('0')" style="grid-column: span 2;">0</button><button onclick="calcNum('.')">.</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const masterCostPool = [
+            { item: "Direct materials used ($18 per unit produced)", answer: "Variable Cost" },
+            { item: "Factory building rent ($15,000 per month)", answer: "Fixed Cost" },
+            { item: "Utilities for factory ($800 base fee + $0.10 per machine hour)", answer: "Mixed Cost" },
+            { item: "Sales commissions ($5 per unit sold)", answer: "Variable Cost" },
+            { item: "Depreciation on office equipment (straight-line method)", answer: "Fixed Cost" },
+            { item: "Equipment maintenance ($1,200 monthly retainer + $25 per service hour)", answer: "Mixed Cost" },
+            { item: "Indirect factory materials ($3 per unit produced)", answer: "Variable Cost" },
+            { item: "Property taxes on corporate headquarters ($12,000 per year)", answer: "Fixed Cost" },
+            { item: "Delivery truck lease ($600 per month plus $0.08 per mile driven)", answer: "Mixed Cost" },
+            { item: "Hourly wages of assembly line workers ($22 per direct labor hour)", answer: "Variable Cost" },
+            { item: "Plant manager's annual salary ($95,000 per year)", answer: "Fixed Cost" },
+            { item: "Telephone bill ($50 base charge plus $0.05 per long-distance minute)", answer: "Mixed Cost" }
+        ];
+
+        let selectedCosts = [];
+        let attemptCount = 0;
+        let isComplete = false;
+
+        function setup() {
+            // Pick 8 random costs from the pool
+            selectedCosts = [...masterCostPool].sort(() => 0.5 - Math.random()).slice(0, 8);
+            renderTable();
+        }
+
+        function renderTable() {
+            const body = document.getElementById('journal-body');
+            body.innerHTML = "";
+            const options = `<option value="">--Select Classification--</option><option value="Fixed Cost">Fixed Cost</option><option value="Variable Cost">Variable Cost</option><option value="Mixed Cost">Mixed Cost</option>`;
+            
+            selectedCosts.forEach((c, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${c.item}</strong></td>
+                    <td><select class="acc-select" id="class-${index}">${options}</select></td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        // --- CALCULATOR & KEYBOARD ---
+        let calcVal = "";
+        function calcNum(n) { calcVal += n; updateDisp(); }
+        function calcOp(op) { calcVal += " " + op + " "; updateDisp(); }
+        function calcClear() { calcVal = ""; updateDisp(); }
+        
+        function updateDisp() { 
+            const parts = calcVal.split(' ');
+            const formatted = parts.map(p => {
+                if(!isNaN(p) && p !== "") return Number(p).toLocaleString();
+                return p;
+            }).join(' ');
+            document.getElementById('calc-display').innerText = formatted || "0"; 
+        }
+
+        function calcEq() { 
+            try { 
+                let res = eval(calcVal);
+                calcVal = res.toString(); 
+                updateDisp(); 
+            } catch { 
+                calcVal = "Error"; updateDisp(); calcVal = ""; 
+            } 
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
+            if (e.key >= '0' && e.key <= '9') calcNum(e.key);
+            if (['+', '-', '*', '/'].includes(e.key)) calcOp(e.key);
+            if (e.key === 'Enter') { e.preventDefault(); calcEq(); }
+            if (e.key === 'Backspace') { e.preventDefault(); calcClear(); }
+            if (e.key === '.') calcNum('.');
+        });
+
+        // --- GRADING ---
+        function grade() {
+            if(isComplete) { location.reload(); return; }
+            attemptCount++;
+
+            let correctCount = 0;
+            const totalItems = selectedCosts.length;
+
+            selectedCosts.forEach((c, index) => {
+                const selectEl = document.getElementById(`class-${index}`);
+                const studentVal = selectEl.value;
+
+                selectEl.classList.remove('correct', 'incorrect');
+                if (studentVal === c.answer) {
+                    selectEl.classList.add('correct');
+                    selectEl.disabled = true;
+                    correctCount++;
+                } else if (studentVal !== "") {
+                    selectEl.classList.add('incorrect');
+                }
+            });
+
+            const score = Math.round((correctCount / totalItems) * 100);
+            
+            const hBody = document.getElementById('history-body');
+            if(attemptCount === 1) hBody.innerHTML = "";
+            hBody.innerHTML = `<tr><td>${attemptCount}</td><td>${correctCount} / ${totalItems}</td><td>${score}%</td></tr>` + hBody.innerHTML;
+
+            const btn = document.getElementById('submit-btn');
+            if(score === 100) {
+                isComplete = true;
+                btn.textContent = "Great Job! Generate New Problem";
+                btn.style.backgroundColor = "var(--success)";
+            } else {
+                btn.textContent = "Try Again - Fix Your Errors";
+            }
+        }
+
+        document.getElementById('submit-btn').onclick = grade;
+        setup();
+    </script>
+</body>
+</html>
