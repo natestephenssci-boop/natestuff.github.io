@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High-Low Method - BYUH Accounting</title>
+    <style>
+        :root {
+            --crimson: #ba0c2f;
+            --gold: #c69214;
+            --light-gold: #fcf2e3;
+            --success: #2e7d32;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 { color: var(--crimson); text-align: center; margin-top: 10px; }
+        .instruction { text-align: center; font-size: 0.95em; max-width: 800px; margin: 0 auto 20px; }
+
+        #tracker-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--gold);
+            box-sizing: border-box;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .history-table th { background: #eee; padding: 8px; border-bottom: 2px solid var(--gold); }
+        .history-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+
+        .main-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        #scenario-container {
+            flex: 1.2;
+            min-width: 320px;
+            background: white;
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+            height: fit-content;
+        }
+
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.85em; margin-top: 10px; }
+        .data-table th { background: var(--crimson); color: white; padding: 6px; text-align: left; }
+        .data-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+
+        #journal-container {
+            flex: 1.8;
+            min-width: 380px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        .journal-table { width: 100%; border-collapse: collapse; }
+        .journal-table th { background-color: var(--crimson); color: white; padding: 10px; font-size: 0.8em; text-transform: uppercase; }
+        .journal-table td { padding: 8px 6px; border: 1px solid #ddd; font-size: 0.9em; }
+
+        .amt-input {
+            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95em; font-family: monospace; text-align: right;
+        }
+
+        #calc-wrapper { flex: 0 0 220px; }
+        #calc-container {
+            width: 220px; background: #333; color: white; padding: 12px; border-radius: 8px;
+            position: sticky; top: 20px; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        #calc-display {
+            width: 100%; background: #222; color: #0f0; text-align: right; padding: 10px; box-sizing: border-box;
+            font-family: 'Courier New', monospace; font-size: 1.2em; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; min-height: 44px;
+        }
+
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .calc-grid button { padding: 12px 0; cursor: pointer; border: none; border-radius: 4px; background: #555; color: white; font-weight: bold; font-size: 1em; }
+        .calc-grid button:hover { background: var(--gold); }
+        .calc-grid .btn-op { background: var(--gold); }
+
+        .correct { background-color: #e6ffe6 !important; border-color: #4CAF50 !important; }
+        .incorrect { background-color: #ffe6e6 !important; border-color: #f44336 !important; }
+        
+        #submit-btn {
+            display: block; width: 100%; max-width: 400px; margin: 25px auto; padding: 15px;
+            background-color: var(--gold); color: white; border: none; border-radius: 6px;
+            font-size: 1.1em; font-weight: bold; cursor: pointer;
+        }
+
+        @media (max-width: 950px) {
+            .main-layout { flex-direction: column; }
+            #calc-wrapper { width: 100%; flex: none; }
+            #calc-container { position: relative; width: 100%; top: 0; margin-bottom: 20px; }
+            #scenario-container { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>High-Low Method Challenge</h1>
+    <p class="instruction">
+        Review the six months of activity and maintenance cost data below. Use the <strong>High-Low Method</strong> to determine the variable cost per unit, total fixed cost, and estimate the total cost at a specific production level.
+    </p>
+
+    <div id="tracker-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Attempt</th>
+                    <th>Computations Correct</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="3">Complete the computations below to start tracking progress.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="main-layout">
+        <div id="scenario-container">
+            <h3 style="text-align: center; color: var(--crimson); margin-top:0;">Six-Month Operating Data</h3>
+            <table class="data-table">
+                <thead>
+                    <tr><th>Month</th><th>Machine Hours (Activity)</th><th>Total Cost ($)</th></tr>
+                </thead>
+                <tbody id="data-tbody"></tbody>
+            </table>
+        </div>
+
+        <div id="journal-container">
+            <table class="journal-table">
+                <thead>
+                    <tr><th style="width: 70%;">High-Low Component Estimation</th><th style="width: 30%;">Amount ($ or Rate)</th></tr>
+                </thead>
+                <tbody id="journal-body">
+                    <tr>
+                        <td><strong>Variable Cost per Unit (Hour)</strong> (Round to 2 decimal places if needed)</td>
+                        <td><input type="text" class="amt-input" id="ans-vc" placeholder="0.00"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Fixed Cost per Month</strong> (Calculated using High or Low point)</td>
+                        <td><input type="text" class="amt-input" id="ans-fc" placeholder="0"></td>
+                    </tr>
+                    <tr id="forecast-row">
+                        <td id="forecast-label"><strong>Estimated Total Cost</strong> at forecast level</td>
+                        <td><input type="text" class="amt-input" id="ans-forecast" placeholder="0"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button id="submit-btn">Check My Work</button>
+        </div>
+
+        <div id="calc-wrapper">
+            <div id="calc-container">
+                <div id="calc-display">0</div>
+                <div class="calc-grid">
+                    <button onclick="calcClear()">C</button>
+                    <button onclick="calcOp('/')" class="btn-op">÷</button>
+                    <button onclick="calcOp('*')" class="btn-op">×</button>
+                    <button onclick="calcClear()">Del</button>
+                    <button onclick="calcNum('7')">7</button><button onclick="calcNum('8')">8</button><button onclick="calcNum('9')">9</button>
+                    <button onclick="calcOp('-')" class="btn-op">−</button>
+                    <button onclick="calcNum('4')">4</button><button onclick="calcNum('5')">5</button><button onclick="calcNum('6')">6</button>
+                    <button onclick="calcOp('+')" class="btn-op">+</button>
+                    <button onclick="calcNum('1')">1</button><button onclick="calcNum('2')">2</button><button onclick="calcNum('3')">3</button>
+                    <button onclick="calcEq()" style="grid-row: span 2; background: var(--crimson);">=</button>
+                    <button onclick="calcNum('0')" style="grid-column: span 2;">0</button><button onclick="calcNum('.')">.</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scenario = {};
+        let attemptCount = 0;
+        let isComplete = false;
+
+        function rand(min, max) { return Math.floor(Math.random() * (max - min + 1) + min); }
+
+        function setup() {
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            // Pick 6 random distinct months
+            const shuffledMonths = [...months].sort(() => 0.5 - Math.random()).slice(0, 6);
+            
+            const trueFixed = rand(12, 25) * 1000; // $12,000 to $25,000
+            const trueVarRate = (rand(15, 35) / 10); // $1.50 to $3.50 per hour
+
+            // Generate hours ensuring distinct high and low points
+            let data = [];
+            let baseHours = [rand(30, 45)*100, rand(48, 58)*100, rand(60, 72)*100, rand(75, 88)*100, rand(90, 105)*100, rand(110, 130)*100];
+            baseHours.sort(() => 0.5 - Math.random());
+
+            for(let i=0; i<6; i++) {
+                let hrs = baseHours[i];
+                let cost = Math.round(trueFixed + (hrs * trueVarRate));
+                data.push({ month: shuffledMonths[i], hours: hrs, cost: cost });
+            }
+
+            // Determine High and Low based on hours
+            data.sort((a, b) => a.hours - b.hours);
+            const lowPoint = data[0];
+            const highPoint = data[data.length - 1];
+
+            const vcRate = (highPoint.cost - lowPoint.cost) / (highPoint.hours - lowPoint.hours);
+            const fcTotal = highPoint.cost - (vcRate * highPoint.hours);
+
+            // Forecast point within range
+            const forecastHours = rand(Math.round(lowPoint.hours * 1.1), Math.round(highPoint.hours * 0.9));
+            const forecastCost = Math.round(fcTotal + (forecastHours * trueVarRate));
+
+            scenario = {
+                data: data,
+                vcRate: parseFloat(vcRate.toFixed(2)),
+                fcTotal: Math.round(fcTotal),
+                forecastHours: forecastHours,
+                forecastCost: forecastCost
+            };
+
+            // Render table
+            const tbody = document.getElementById('data-tbody');
+            tbody.innerHTML = "";
+            scenario.data.forEach(d => {
+                tbody.innerHTML += `<tr><td><strong>${d.month}</strong></td><td>${d.hours.toLocaleString()} hrs</td><td>$${d.cost.toLocaleString()}</td></tr>`;
+            });
+
+            document.getElementById('forecast-label').innerHTML = `<strong>Estimated Total Cost</strong> at ${forecastHours.toLocaleString()} machine hours`;
+
+            document.querySelectorAll('.amt-input').forEach(input => {
+                input.value = "";
+                input.disabled = false;
+                input.classList.remove('correct', 'incorrect');
+            });
+        }
+
+        // --- CALCULATOR & KEYBOARD ---
+        let calcVal = "";
+        function calcNum(n) { calcVal += n; updateDisp(); }
+        function calcOp(op) { calcVal += " " + op + " "; updateDisp(); }
+        function calcClear() { calcVal = ""; updateDisp(); }
+        
+        function updateDisp() { 
+            const parts = calcVal.split(' ');
+            const formatted = parts.map(p => {
+                if(!isNaN(p) && p !== "") return Number(p).toLocaleString();
+                return p;
+            }).join(' ');
+            document.getElementById('calc-display').innerText = formatted || "0"; 
+        }
+
+        function calcEq() { 
+            try { 
+                let res = eval(calcVal);
+                calcVal = res.toString(); 
+                updateDisp(); 
+            } catch { 
+                calcVal = "Error"; updateDisp(); calcVal = ""; 
+            } 
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
+            if (e.key >= '0' && e.key <= '9') calcNum(e.key);
+            if (['+', '-', '*', '/'].includes(e.key)) calcOp(e.key);
+            if (e.key === 'Enter') { e.preventDefault(); calcEq(); }
+            if (e.key === 'Backspace') { e.preventDefault(); calcClear(); }
+            if (e.key === '.') calcNum('.');
+        });
+
+        document.querySelectorAll('.amt-input').forEach(input => {
+            input.addEventListener('input', e => {
+                let val = e.target.value.replace(/,/g, '');
+                // Allow decimals for VC rate input
+                if(input.id === 'ans-vc') {
+                    if(!isNaN(val) && val !== "") {
+                        let parts = e.target.value.split('.');
+                        parts[0] = Number(parts[0]).toLocaleString();
+                        e.target.value = parts.join('.');
+                    }
+                } else {
+                    if(!isNaN(val) && val !== "") e.target.value = Number(val).toLocaleString();
+                }
+            });
+        });
+
+        // --- GRADING ---
+        function grade() {
+            if(isComplete) { location.reload(); return; }
+            attemptCount++;
+
+            const fields = [
+                { id: 'ans-vc', val: scenario.vcRate, tolerance: 0.05 },
+                { id: 'ans-fc', val: scenario.fcTotal, tolerance: 5 },
+                { id: 'ans-forecast', val: scenario.forecastCost, tolerance: 5 }
+            ];
+
+            let correctCount = 0;
+
+            fields.forEach(f => {
+                const el = document.getElementById(f.id);
+                const studentVal = parseFloat(el.value.replace(/,/g, '')) || 0;
+
+                el.classList.remove('correct', 'incorrect');
+                if (Math.abs(studentVal - f.val) <= f.tolerance) {
+                    el.classList.add('correct');
+                    el.disabled = true;
+                    correctCount++;
+                } else if (el.value !== "") {
+                    el.classList.add('incorrect');
+                }
+            });
+
+            const score = Math.round((correctCount / fields.length) * 100);
+            
+            const hBody = document.getElementById('history-body');
+            if(attemptCount === 1) hBody.innerHTML = "";
+            hBody.innerHTML = `<tr><td>${attemptCount}</td><td>${correctCount} / ${fields.length}</td><td>${score}%</td></tr>` + hBody.innerHTML;
+
+            const btn = document.getElementById('submit-btn');
+            if(score === 100) {
+                isComplete = true;
+                btn.textContent = "Great Job! Generate New Problem";
+                btn.style.backgroundColor = "var(--success)";
+            } else {
+                btn.textContent = "Try Again - Fix Your Errors";
+            }
+        }
+
+        document.getElementById('submit-btn').onclick = grade;
+        setup();
+    </script>
+</body>
+</html>
