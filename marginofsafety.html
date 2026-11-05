@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Margin of Safety Analysis - BYUH Accounting</title>
+    <style>
+        :root {
+            --crimson: #ba0c2f;
+            --gold: #c69214;
+            --light-gold: #fcf2e3;
+            --success: #2e7d32;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 { color: var(--crimson); text-align: center; margin-top: 10px; }
+        .instruction { text-align: center; font-size: 0.95em; max-width: 850px; margin: 0 auto 20px; }
+
+        #tracker-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--gold);
+            box-sizing: border-box;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .history-table th { background: #eee; padding: 8px; border-bottom: 2px solid var(--gold); }
+        .history-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+
+        .main-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1250px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        #scenario-container {
+            flex: 1.2;
+            min-width: 320px;
+            background: white;
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+            height: fit-content;
+        }
+
+        .company-box {
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 6px;
+            background: #fff9f0;
+        }
+
+        .is-table { width: 100%; border-collapse: collapse; font-size: 0.8em; margin-top: 6px; }
+        .is-table th { background: var(--crimson); color: white; padding: 4px; text-align: left; }
+        .is-table td { padding: 4px; border-bottom: 1px solid #ddd; }
+        .is-num { text-align: right; font-family: monospace; }
+        .subtotal { border-top: 1px solid #333; border-bottom: 1px solid #333; font-weight: bold; }
+        .total-line { border-top: 2px solid #333; border-bottom: 3px double #333; font-weight: bold; }
+
+        #journal-container {
+            flex: 1.8;
+            min-width: 380px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        .journal-table { width: 100%; border-collapse: collapse; }
+        .journal-table th { background-color: var(--crimson); color: white; padding: 10px; font-size: 0.8em; text-transform: uppercase; }
+        .journal-table td { padding: 8px 6px; border: 1px solid #ddd; font-size: 0.9em; }
+
+        .amt-input {
+            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95em; font-family: monospace; text-align: right;
+        }
+
+        #calc-wrapper { flex: 0 0 220px; }
+        #calc-container {
+            width: 220px; background: #333; color: white; padding: 12px; border-radius: 8px;
+            position: sticky; top: 20px; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        #calc-display {
+            width: 100%; background: #222; color: #0f0; text-align: right; padding: 10px; box-sizing: border-box;
+            font-family: 'Courier New', monospace; font-size: 1.2em; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; min-height: 44px;
+        }
+
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .calc-grid button { padding: 12px 0; cursor: pointer; border: none; border-radius: 4px; background: #555; color: white; font-weight: bold; font-size: 1em; }
+        .calc-grid button:hover { background: var(--gold); }
+        .calc-grid .btn-op { background: var(--gold); }
+
+        .correct { background-color: #e6ffe6 !important; border-color: #4CAF50 !important; }
+        .incorrect { background-color: #ffe6e6 !important; border-color: #f44336 !important; }
+        
+        #submit-btn {
+            display: block; width: 100%; max-width: 400px; margin: 25px auto; padding: 15px;
+            background-color: var(--gold); color: white; border: none; border-radius: 6px;
+            font-size: 1.1em; font-weight: bold; cursor: pointer;
+        }
+
+        @media (max-width: 950px) {
+            .main-layout { flex-direction: column; }
+            #calc-wrapper { width: 100%; flex: none; }
+            #calc-container { position: relative; width: 100%; top: 0; margin-bottom: 20px; }
+            #scenario-container { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Margin of Safety Analysis Challenge</h1>
+    <p class="instruction">
+        Review the current Contribution Margin format income statements for <strong>Company Alpha</strong> and <strong>Company Beta</strong> below. Both companies operate with similar actual sales revenue. Compute the breakeven point and the <strong>Margin of Safety</strong> in both dollars and units for each company.
+    </p>
+
+    <div id="tracker-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Attempt</th>
+                    <th>Computations Correct</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="3">Complete the computations below to start tracking progress.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="main-layout">
+        <div id="scenario-container">
+            <h3 style="text-align: center; color: var(--crimson); margin-top:0;">Income Statements</h3>
+            
+            <div class="company-box">
+                <strong>Company Alpha</strong>
+                <div id="alpha-vol" style="font-size:0.85em; color:#555;"></div>
+                <table class="is-table">
+                    <tbody>
+                        <tr><td>Sales Revenue</td><td class="is-num" id="alpha-sales"></td></tr>
+                        <tr><td>Variable Expenses</td><td class="is-num" id="alpha-ve"></td></tr>
+                        <tr class="subtotal"><td>Contribution Margin</td><td class="is-num" id="alpha-cm"></td></tr>
+                        <tr><td>Fixed Expenses</td><td class="is-num" id="alpha-fe"></td></tr>
+                        <tr class="total-line"><td>Net Operating Income</td><td class="is-num" id="alpha-ni"></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="company-box">
+                <strong>Company Beta</strong>
+                <div id="beta-vol" style="font-size:0.85em; color:#555;"></div>
+                <table class="is-table">
+                    <tbody>
+                        <tr><td>Sales Revenue</td><td class="is-num" id="beta-sales"></td></tr>
+                        <tr><td>Variable Expenses</td><td class="is-num" id="beta-ve"></td></tr>
+                        <tr class="subtotal"><td>Contribution Margin</td><td class="is-num" id="beta-cm"></td></tr>
+                        <tr><td>Fixed Expenses</td><td class="is-num" id="beta-fe"></td></tr>
+                        <tr class="total-line"><td>Net Operating Income</td><td class="is-num" id="beta-ni"></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="journal-container">
+            <table class="journal-table">
+                <thead>
+                    <tr><th style="width: 70%;">Margin of Safety Metric / Component</th><th style="width: 30%;">Amount ($ or Units)</th></tr>
+                </thead>
+                <tbody id="journal-body">
+                    <tr style="background:#eee;"><td colspan="2"><strong>Company Alpha Calculations</strong></td></tr>
+                    <tr>
+                        <td><strong>Alpha: Breakeven Point in Sales Dollars ($)</strong></td>
+                        <td><input type="text" class="amt-input" id="ans-alpha-be-dol" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Alpha: Breakeven Point in Units</strong> (Round to nearest whole unit)</td>
+                        <td><input type="text" class="amt-input" id="ans-alpha-be-units" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Alpha: Margin of Safety in Dollars ($)</strong></td>
+                        <td><input type="text" class="amt-input" id="ans-alpha-mos-dol" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Alpha: Margin of Safety in Units</strong></td>
+                        <td><input type="text" class="amt-input" id="ans-alpha-mos-units" placeholder="0"></td>
+                    </tr>
+
+                    <tr style="background:#eee;"><td colspan="2"><strong>Company Beta Calculations</strong></td></tr>
+                    <tr>
+                        <td><strong>Beta: Breakeven Point in Sales Dollars ($)</strong></td>
+                        <td><input type="text" class="amt-input" id="ans-beta-be-dol" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Beta: Breakeven Point in Units</strong> (Round to nearest whole unit)</td>
+                        <td><input type="text" class="amt-input" id="ans-beta-be-units" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Beta: Margin of Safety in Dollars ($)</strong></td>
+                        <td><input type="text" class="amt-input" id="ans-beta-mos-dol" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Beta: Margin of Safety in Units</strong></td>
+                        <td><input type="text" class="amt-input" id="ans-beta-mos-units" placeholder="0"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button id="submit-btn">Check My Work</button>
+        </div>
+
+        <div id="calc-wrapper">
+            <div id="calc-container">
+                <div id="calc-display">0</div>
+                <div class="calc-grid">
+                    <button onclick="calcClear()">C</button>
+                    <button onclick="calcOp('/')" class="btn-op">÷</button>
+                    <button onclick="calcOp('*')" class="btn-op">×</button>
+                    <button onclick="calcClear()">Del</button>
+                    <button onclick="calcNum('7')">7</button><button onclick="calcNum('8')">8</button><button onclick="calcNum('9')">9</button>
+                    <button onclick="calcOp('-')" class="btn-op">−</button>
+                    <button onclick="calcNum('4')">4</button><button onclick="calcNum('5')">5</button><button onclick="calcNum('6')">6</button>
+                    <button onclick="calcOp('+')" class="btn-op">+</button>
+                    <button onclick="calcNum('1')">1</button><button onclick="calcNum('2')">2</button><button onclick="calcNum('3')">3</button>
+                    <button onclick="calcEq()" style="grid-row: span 2; background: var(--crimson);">=</button>
+                    <button onclick="calcNum('0')" style="grid-column: span 2;">0</button><button onclick="calcNum('.')">.</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scenario = {};
+        let attemptCount = 0;
+        let isComplete = false;
+
+        function rand(min, max) { return Math.floor(Math.random() * (max - min + 1) + min); }
+
+        function generateCompany(targetSalesUnits) {
+            const cleanRatios = [0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60];
+            const cmRatio = cleanRatios[rand(0, cleanRatios.length - 1)];
+            const sp = rand(50, 130);
+            const unitCM = parseFloat((sp * cmRatio).toFixed(2));
+            const vc = parseFloat((sp - unitCM).toFixed(2));
+            const fe = rand(70, 160) * 1000;
+
+            const salesDol = targetSalesUnits * sp;
+            const varExp = targetSalesUnits * vc;
+            const cm = salesDol - varExp;
+            const ni = cm - fe;
+
+            if (ni <= 5000 || fe >= cm) return null;
+
+            const beUnits = Math.round(fe / unitCM);
+            const beDol = Math.round(beUnits * sp);
+            const mosDol = salesDol - beDol;
+            const mosUnits = targetSalesUnits - beUnits;
+
+            return {
+                units: targetSalesUnits,
+                sp: sp,
+                vc: vc,
+                fe: fe,
+                salesDol: salesDol,
+                varExp: varExp,
+                cm: cm,
+                ni: ni,
+                beDol: beDol,
+                beUnits: beUnits,
+                mosDol: mosDol,
+                mosUnits: mosUnits
+            };
+        }
+
+        function setup() {
+            const sharedUnits = rand(6, 12) * 1000;
+            
+            let alpha = generateCompany(sharedUnits);
+            let beta = generateCompany(sharedUnits);
+
+            // Ensure distinct cost structures between Alpha and Beta
+            while (!alpha || !beta || Math.abs(alpha.fe - beta.fe) < 15000) {
+                alpha = generateCompany(sharedUnits);
+                beta = generateCompany(sharedUnits);
+            }
+
+            scenario = { alpha, beta };
+
+            // Populate Alpha
+            document.getElementById('alpha-vol').innerText = `Sales Volume: ${alpha.units.toLocaleString()} units`;
+            document.getElementById('alpha-sales').innerText = `$${alpha.salesDol.toLocaleString()}`;
+            document.getElementById('alpha-ve').innerText = `($${alpha.varExp.toLocaleString()})`;
+            document.getElementById('alpha-cm').innerText = `$${alpha.cm.toLocaleString()}`;
+            document.getElementById('alpha-fe').innerText = `($${alpha.fe.toLocaleString()})`;
+            document.getElementById('alpha-ni').innerText = `$${alpha.ni.toLocaleString()}`;
+
+            // Populate Beta
+            document.getElementById('beta-vol').innerText = `Sales Volume: ${beta.units.toLocaleString()} units`;
+            document.getElementById('beta-sales').innerText = `$${beta.salesDol.toLocaleString()}`;
+            document.getElementById('beta-ve').innerText = `($${beta.varExp.toLocaleString()})`;
+            document.getElementById('beta-cm').innerText = `$${beta.cm.toLocaleString()}`;
+            document.getElementById('beta-fe').innerText = `($${beta.fe.toLocaleString()})`;
+            document.getElementById('beta-ni').innerText = `$${beta.ni.toLocaleString()}`;
+
+            document.querySelectorAll('.amt-input').forEach(input => {
+                input.value = "";
+                input.disabled = false;
+                input.classList.remove('correct', 'incorrect');
+            });
+        }
+
+        // --- CALCULATOR & KEYBOARD ---
+        let calcVal = "";
+        function calcNum(n) { calcVal += n; updateDisp(); }
+        function calcOp(op) { calcVal += " " + op + " "; updateDisp(); }
+        function calcClear() { calcVal = ""; updateDisp(); }
+        
+        function updateDisp() { 
+            const parts = calcVal.split(' ');
+            const formatted = parts.map(p => {
+                if(!isNaN(p) && p !== "") return Number(p).toLocaleString();
+                return p;
+            }).join(' ');
+            document.getElementById('calc-display').innerText = formatted || "0"; 
+        }
+
+        function calcEq() { 
+            try { 
+                let res = eval(calcVal);
+                calcVal = res.toString(); 
+                updateDisp(); 
+            } catch { 
+                calcVal = "Error"; updateDisp(); calcVal = ""; 
+            } 
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
+            if (e.key >= '0' && e.key <= '9') calcNum(e.key);
+            if (['+', '-', '*', '/'].includes(e.key)) calcOp(e.key);
+            if (e.key === 'Enter') { e.preventDefault(); calcEq(); }
+            if (e.key === 'Backspace') { e.preventDefault(); calcClear(); }
+            if (e.key === '.') calcNum('.');
+        });
+
+        document.querySelectorAll('.amt-input').forEach(input => {
+            input.addEventListener('input', e => {
+                let val = e.target.value.replace(/,/g, '');
+                if(!isNaN(val) && val !== "") e.target.value = Number(val).toLocaleString();
+            });
+        });
+
+        // --- GRADING ---
+        function grade() {
+            if(isComplete) { location.reload(); return; }
+            attemptCount++;
+
+            const fields = [
+                { id: 'ans-alpha-be-dol', val: scenario.alpha.beDol, tolerance: 100 },
+                { id: 'ans-alpha-be-units', val: scenario.alpha.beUnits, tolerance: 2 },
+                { id: 'ans-alpha-mos-dol', val: scenario.alpha.mosDol, tolerance: 100 },
+                { id: 'ans-alpha-mos-units', val: scenario.alpha.mosUnits, tolerance: 2 },
+                { id: 'ans-beta-be-dol', val: scenario.beta.beDol, tolerance: 100 },
+                { id: 'ans-beta-be-units', val: scenario.beta.beUnits, tolerance: 2 },
+                { id: 'ans-beta-mos-dol', val: scenario.beta.mosDol, tolerance: 100 },
+                { id: 'ans-beta-mos-units', val: scenario.beta.mosUnits, tolerance: 2 }
+            ];
+
+            let correctCount = 0;
+
+            fields.forEach(f => {
+                const el = document.getElementById(f.id);
+                const studentVal = parseFloat(el.value.replace(/,/g, '')) || 0;
+
+                el.classList.remove('correct', 'incorrect');
+                if (Math.abs(studentVal - f.val) <= f.tolerance) {
+                    el.classList.add('correct');
+                    el.disabled = true;
+                    correctCount++;
+                } else if (el.value !== "") {
+                    el.classList.add('incorrect');
+                }
+            });
+
+            const score = Math.round((correctCount / fields.length) * 100);
+            
+            const hBody = document.getElementById('history-body');
+            if(attemptCount === 1) hBody.innerHTML = "";
+            hBody.innerHTML = `<tr><td>${attemptCount}</td><td>${correctCount} / ${fields.length}</td><td>${score}%</td></tr>` + hBody.innerHTML;
+
+            const btn = document.getElementById('submit-btn');
+            if(score === 100) {
+                isComplete = true;
+                btn.textContent = "Great Job! Generate New Problem";
+                btn.style.backgroundColor = "var(--success)";
+            } else {
+                btn.textContent = "Try Again - Fix Your Errors";
+            }
+        }
+
+        document.getElementById('submit-btn').onclick = grade;
+        setup();
+    </script>
+</body>
+</html>
