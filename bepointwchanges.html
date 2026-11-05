@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breakeven with Changes - BYUH Accounting</title>
+    <style>
+        :root {
+            --crimson: #ba0c2f;
+            --gold: #c69214;
+            --light-gold: #fcf2e3;
+            --success: #2e7d32;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 { color: var(--crimson); text-align: center; margin-top: 10px; }
+        .instruction { text-align: center; font-size: 0.95em; max-width: 800px; margin: 0 auto 20px; }
+
+        #tracker-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--gold);
+            box-sizing: border-box;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .history-table th { background: #eee; padding: 8px; border-bottom: 2px solid var(--gold); }
+        .history-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+
+        .main-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        #scenario-container {
+            flex: 1.3;
+            min-width: 325px;
+            background: white;
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+            height: fit-content;
+        }
+
+        .is-table { width: 100%; border-collapse: collapse; font-size: 0.85em; margin-top: 10px; }
+        .is-table th { background: var(--crimson); color: white; padding: 6px; text-align: left; }
+        .is-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+        .is-num { text-align: right; font-family: monospace; }
+        .subtotal { border-top: 1px solid #333; border-bottom: 1px solid #333; font-weight: bold; }
+        .total-line { border-top: 2px solid #333; border-bottom: 3px double #333; font-weight: bold; }
+
+        .change-box {
+            margin-top: 15px;
+            padding: 10px;
+            background: #fff9f0;
+            border-left: 4px solid var(--gold);
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+
+        #journal-container {
+            flex: 1.7;
+            min-width: 380px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        .journal-table { width: 100%; border-collapse: collapse; }
+        .journal-table th { background-color: var(--crimson); color: white; padding: 10px; font-size: 0.8em; text-transform: uppercase; }
+        .journal-table td { padding: 8px 6px; border: 1px solid #ddd; font-size: 0.9em; }
+
+        .amt-input {
+            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95em; font-family: monospace; text-align: right;
+        }
+
+        #calc-wrapper { flex: 0 0 220px; }
+        #calc-container {
+            width: 220px; background: #333; color: white; padding: 12px; border-radius: 8px;
+            position: sticky; top: 20px; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        #calc-display {
+            width: 100%; background: #222; color: #0f0; text-align: right; padding: 10px; box-sizing: border-box;
+            font-family: 'Courier New', monospace; font-size: 1.2em; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; min-height: 44px;
+        }
+
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .calc-grid button { padding: 12px 0; cursor: pointer; border: none; border-radius: 4px; background: #555; color: white; font-weight: bold; font-size: 1em; }
+        .calc-grid button:hover { background: var(--gold); }
+        .calc-grid .btn-op { background: var(--gold); }
+
+        .correct { background-color: #e6ffe6 !important; border-color: #4CAF50 !important; }
+        .incorrect { background-color: #ffe6e6 !important; border-color: #f44336 !important; }
+        
+        #submit-btn {
+            display: block; width: 100%; max-width: 400px; margin: 25px auto; padding: 15px;
+            background-color: var(--gold); color: white; border: none; border-radius: 6px;
+            font-size: 1.1em; font-weight: bold; cursor: pointer;
+        }
+
+        @media (max-width: 950px) {
+            .main-layout { flex-direction: column; }
+            #calc-wrapper { width: 100%; flex: none; }
+            #calc-container { position: relative; width: 100%; top: 0; margin-bottom: 20px; }
+            #scenario-container { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Breakeven Point with Proposed Changes Challenge</h1>
+    <p class="instruction">
+        Review the current Contribution Margin format income statement and the proposed operational changes below. Compute the updated unit contribution margin, the updated total fixed expenses, and the new <strong>Breakeven Point</strong> in both units and sales dollars after the changes take effect.
+    </p>
+
+    <div id="tracker-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Attempt</th>
+                    <th>Computations Correct</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="3">Complete the computations below to start tracking progress.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="main-layout">
+        <div id="scenario-container">
+            <h3 style="text-align: center; color: var(--crimson); margin-top:0;">Current Income Statement</h3>
+            <div id="vol-display" style="font-weight: bold; margin-bottom: 8px; font-size: 0.9em; color: #555;"></div>
+            <table class="is-table">
+                <tbody>
+                    <tr><td>Sales Revenue</td><td class="is-num" id="is-sales"></td></tr>
+                    <tr><td>Variable Expenses</td><td class="is-num" id="is-ve"></td></tr>
+                    <tr class="subtotal"><td>Contribution Margin</td><td class="is-num" id="is-cm"></td></tr>
+                    <tr><td>Fixed Expenses</td><td class="is-num" id="is-fe"></td></tr>
+                    <tr class="total-line"><td>Net Operating Income</td><td class="is-num" id="is-ni"></td></tr>
+                </tbody>
+            </table>
+            <div class="change-box" id="changes-display"></div>
+        </div>
+
+        <div id="journal-container">
+            <table class="journal-table">
+                <thead>
+                    <tr><th style="width: 70%;">Updated Breakeven Metric / Component</th><th style="width: 30%;">Amount ($ or Units)</th></tr>
+                </thead>
+                <tbody id="journal-body">
+                    <tr>
+                        <td><strong>Updated Variable Cost per Unit</strong></td>
+                        <td><input type="text" class="amt-input" id="ans-new-vc" placeholder="0.00"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Updated Total Fixed Expenses</strong></td>
+                        <td><input type="text" class="amt-input" id="ans-new-fe" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Updated Contribution Margin per Unit</strong></td>
+                        <td><input type="text" class="amt-input" id="ans-new-cm" placeholder="0.00"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>New Breakeven Point in Units</strong> (Round to nearest whole unit)</td>
+                        <td><input type="text" class="amt-input" id="ans-new-be-units" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>New Breakeven Point in Sales Dollars ($)</strong></td>
+                        <td><input type="text" class="amt-input" id="ans-new-be-dollars" placeholder="0"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button id="submit-btn">Check My Work</button>
+        </div>
+
+        <div id="calc-wrapper">
+            <div id="calc-container">
+                <div id="calc-display">0</div>
+                <div class="calc-grid">
+                    <button onclick="calcClear()">C</button>
+                    <button onclick="calcOp('/')" class="btn-op">÷</button>
+                    <button onclick="calcOp('*')" class="btn-op">×</button>
+                    <button onclick="calcClear()">Del</button>
+                    <button onclick="calcNum('7')">7</button><button onclick="calcNum('8')">8</button><button onclick="calcNum('9')">9</button>
+                    <button onclick="calcOp('-')" class="btn-op">−</button>
+                    <button onclick="calcNum('4')">4</button><button onclick="calcNum('5')">5</button><button onclick="calcNum('6')">6</button>
+                    <button onclick="calcOp('+')" class="btn-op">+</button>
+                    <button onclick="calcNum('1')">1</button><button onclick="calcNum('2')">2</button><button onclick="calcNum('3')">3</button>
+                    <button onclick="calcEq()" style="grid-row: span 2; background: var(--crimson);">=</button>
+                    <button onclick="calcNum('0')" style="grid-column: span 2;">0</button><button onclick="calcNum('.')">.</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scenario = {};
+        let attemptCount = 0;
+        let isComplete = false;
+
+        function rand(min, max) { return Math.floor(Math.random() * (max - min + 1) + min); }
+
+        function setup() {
+            const unitsSold = rand(5, 12) * 1000; 
+            
+            const cleanRatios = [0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60];
+            const cmRatio = cleanRatios[rand(0, cleanRatios.length - 1)];
+
+            const sellingPrice = rand(60, 130); 
+            const unitCM = parseFloat((sellingPrice * cmRatio).toFixed(2));
+            const varCostPerUnit = parseFloat((sellingPrice - unitCM).toFixed(2));
+            
+            const fixedExpenses = rand(70, 160) * 1000; 
+
+            const totalSales = unitsSold * sellingPrice;
+            const totalVarExp = unitsSold * varCostPerUnit;
+            const totalCM = totalSales - totalVarExp;
+            const netIncome = totalCM - fixedExpenses;
+
+            if (netIncome <= 5000) {
+                setup();
+                return;
+            }
+
+            // Proposed changes: decrease variable cost per unit, increase fixed expenses
+            const vcDecrease = rand(2, 6); // e.g., decrease by $2 to $6 per unit
+            const newVC = parseFloat((varCostPerUnit - vcDecrease).toFixed(2));
+            
+            const feIncrease = rand(15, 45) * 1000; // e.g., increase fixed costs by $15k to $45k
+            const newFE = fixedExpenses + feIncrease;
+
+            const newUnitCM = parseFloat((sellingPrice - newVC).toFixed(2));
+            const newBeUnits = Math.round(newFE / newUnitCM);
+            const newBeDollars = Math.round(newBeUnits * sellingPrice);
+
+            scenario = {
+                unitsSold: unitsSold,
+                sellingPrice: sellingPrice,
+                varCostPerUnit: varCostPerUnit,
+                fixedExpenses: fixedExpenses,
+                newVC: newVC,
+                newFE: newFE,
+                newUnitCM: newUnitCM,
+                newBeUnits: newBeUnits,
+                newBeDollars: newBeDollars
+            };
+
+            // Populate Income Statement & Changes Box
+            document.getElementById('vol-display').innerText = `Sales Volume: ${unitsSold.toLocaleString()} units`;
+            document.getElementById('is-sales').innerText = `$${totalSales.toLocaleString()}`;
+            document.getElementById('is-ve').innerText = `($${totalVarExp.toLocaleString()})`;
+            document.getElementById('is-cm').innerText = `$${totalCM.toLocaleString()}`;
+            document.getElementById('is-fe').innerText = `($${fixedExpenses.toLocaleString()})`;
+            document.getElementById('is-ni').innerText = `$${netIncome.toLocaleString()}`;
+            
+            document.getElementById('changes-display').innerHTML = `
+                <strong>Proposed Operational Changes:</strong><br>
+                • Variable cost will decrease by <strong>$${vcDecrease.toFixed(2)}</strong> per unit.<br>
+                • Total fixed expenses will increase by <strong>$${feIncrease.toLocaleString()}</strong>.
+            `;
+
+            document.querySelectorAll('.amt-input').forEach(input => {
+                input.value = "";
+                input.disabled = false;
+                input.classList.remove('correct', 'incorrect');
+            });
+        }
+
+        // --- CALCULATOR & KEYBOARD ---
+        let calcVal = "";
+        function calcNum(n) { calcVal += n; updateDisp(); }
+        function calcOp(op) { calcVal += " " + op + " "; updateDisp(); }
+        function calcClear() { calcVal = ""; updateDisp(); }
+        
+        function updateDisp() { 
+            const parts = calcVal.split(' ');
+            const formatted = parts.map(p => {
+                if(!isNaN(p) && p !== "") return Number(p).toLocaleString();
+                return p;
+            }).join(' ');
+            document.getElementById('calc-display').innerText = formatted || "0"; 
+        }
+
+        function calcEq() { 
+            try { 
+                let res = eval(calcVal);
+                calcVal = res.toString(); 
+                updateDisp(); 
+            } catch { 
+                calcVal = "Error"; updateDisp(); calcVal = ""; 
+            } 
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
+            if (e.key >= '0' && e.key <= '9') calcNum(e.key);
+            if (['+', '-', '*', '/'].includes(e.key)) calcOp(e.key);
+            if (e.key === 'Enter') { e.preventDefault(); calcEq(); }
+            if (e.key === 'Backspace') { e.preventDefault(); calcClear(); }
+            if (e.key === '.') calcNum('.');
+        });
+
+        document.querySelectorAll('.amt-input').forEach(input => {
+            input.addEventListener('input', e => {
+                let val = e.target.value.replace(/,/g, '');
+                if(['ans-new-vc', 'ans-new-cm'].includes(input.id)) {
+                    if(!isNaN(val) && val !== "") {
+                        let parts = e.target.value.split('.');
+                        parts[0] = Number(parts[0]).toLocaleString();
+                        e.target.value = parts.join('.');
+                    }
+                } else {
+                    if(!isNaN(val) && val !== "") e.target.value = Number(val).toLocaleString();
+                }
+            });
+        });
+
+        // --- GRADING ---
+        function grade() {
+            if(isComplete) { location.reload(); return; }
+            attemptCount++;
+
+            const fields = [
+                { id: 'ans-new-vc', val: scenario.newVC, tolerance: 0.05 },
+                { id: 'ans-new-fe', val: scenario.newFE, tolerance: 5 },
+                { id: 'ans-new-cm', val: scenario.newUnitCM, tolerance: 0.05 },
+                { id: 'ans-new-be-units', val: scenario.newBeUnits, tolerance: 2 },
+                { id: 'ans-new-be-dollars', val: scenario.newBeDollars, tolerance: 50 }
+            ];
+
+            let correctCount = 0;
+
+            fields.forEach(f => {
+                const el = document.getElementById(f.id);
+                const studentVal = parseFloat(el.value.replace(/,/g, '')) || 0;
+
+                el.classList.remove('correct', 'incorrect');
+                if (Math.abs(studentVal - f.val) <= f.tolerance) {
+                    el.classList.add('correct');
+                    el.disabled = true;
+                    correctCount++;
+                } else if (el.value !== "") {
+                    el.classList.add('incorrect');
+                }
+            });
+
+            const score = Math.round((correctCount / fields.length) * 100);
+            
+            const hBody = document.getElementById('history-body');
+            if(attemptCount === 1) hBody.innerHTML = "";
+            hBody.innerHTML = `<tr><td>${attemptCount}</td><td>${correctCount} / ${fields.length}</td><td>${score}%</td></tr>` + hBody.innerHTML;
+
+            const btn = document.getElementById('submit-btn');
+            if(score === 100) {
+                isComplete = true;
+                btn.textContent = "Great Job! Generate New Problem";
+                btn.style.backgroundColor = "var(--success)";
+            } else {
+                btn.textContent = "Try Again - Fix Your Errors";
+            }
+        }
+
+        document.getElementById('submit-btn').onclick = grade;
+        setup();
+    </script>
+</body>
+</html>
