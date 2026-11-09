@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cost Classification Challenge</title>
+    <style>
+        :root {
+            --byuh-crimson: #9E1B34;
+            --byuh-gold: #AA800E;
+            --byuh-light-gold: #fcf8ec;
+            --success: #2e7d32;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 { color: var(--byuh-crimson); text-align: center; margin-top: 10px; }
+        .instruction { text-align: center; font-size: 0.95em; max-width: 900px; margin: 0 auto 15px; }
+
+        #tracker-container {
+            width: 100%;
+            max-width: 950px;
+            margin: 0 auto 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--byuh-gold);
+            box-sizing: border-box;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .history-table th { background: #eee; padding: 8px; border-bottom: 2px solid var(--byuh-gold); }
+        .history-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+
+        .main-layout {
+            max-width: 950px;
+            margin: 0 auto;
+            background: white;
+            border: 2px solid var(--byuh-gold);
+            border-radius: 8px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .cost-table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-top: 10px; }
+        .cost-table th { background: var(--byuh-crimson); color: white; padding: 10px; text-align: left; }
+        .cost-table td { padding: 8px 10px; border-bottom: 1px solid #ddd; vertical-align: middle; }
+        
+        .classification-select {
+            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9em; background: #fffdf4; font-weight: bold; color: var(--byuh-crimson); cursor: pointer;
+        }
+
+        .correct { background-color: #e6ffe6 !important; border-color: #4CAF50 !important; }
+        .incorrect { background-color: #ffe6e6 !important; border-color: #f44336 !important; }
+        
+        #submit-btn {
+            display: block; width: 100%; max-width: 350px; margin: 25px auto 10px; padding: 15px;
+            background-color: var(--byuh-crimson); color: white; border: none; border-radius: 6px;
+            font-size: 1.1em; font-weight: bold; cursor: pointer;
+        }
+        #submit-btn:hover { background: #7c1227; }
+    </style>
+</head>
+<body>
+
+    <h1>Cost Classification Challenge</h1>
+    <p class="instruction">
+        Review the 10 cost items incurred by our manufacturing operations below. Classify each item accurately as <strong>Direct Materials</strong>, <strong>Direct Labor</strong>, <strong>Manufacturing Overhead</strong>, or <strong>Nonmanufacturing (Period) Cost</strong>.
+    </p>
+
+    <div id="tracker-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Attempt</th>
+                    <th>Items Correct</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="3">Complete the classification below to start tracking your progress.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="main-layout">
+        <h3 style="margin-top:0; color: var(--byuh-crimson); text-align: center;">Cost Item Evaluation (10 Items)</h3>
+        <table class="cost-table">
+            <thead>
+                <tr>
+                    <th style="width: 55%;">Cost Description</th>
+                    <th style="width: 45%;">Classification</th>
+                </tr>
+            </thead>
+            <tbody id="cost-tbody"></tbody>
+        </table>
+        <button id="submit-btn">Check My Work</button>
+    </div>
+
+    <script>
+        const masterPool = [
+            { desc: "Raw wood and laminate materials used in desktop production", type: "Direct Materials" },
+            { desc: "Wages paid to primary machine operators on the production line", type: "Direct Labor" },
+            { desc: "Factory supervisor monthly salary", type: "Manufacturing Overhead" },
+            { desc: "Depreciation on automated factory robotic equipment", type: "Manufacturing Overhead" },
+            { desc: "Sales commissions paid to regional marketing representatives", type: "Nonmanufacturing / Period" },
+            { desc: "Corporate headquarters administrative office rent", type: "Nonmanufacturing / Period" },
+            { desc: "Steel brackets and assembly screws used in product framing", type: "Direct Materials" },
+            { desc: "Factory utility costs (electricity and water for plant)", type: "Manufacturing Overhead" },
+            { desc: "Advertising campaign expenses for online product launch", type: "Nonmanufacturing / Period" },
+            { desc: "Wages paid to assembly line workers packaging finished goods", type: "Direct Labor" },
+            { desc: "Factory janitorial supplies and maintenance staff wages", type: "Manufacturing Overhead" },
+            { desc: "Legal fees incurred for corporate patent registration", type: "Nonmanufacturing / Period" },
+            { desc: "Lubricant oil used to maintain factory manufacturing machinery", type: "Manufacturing Overhead" },
+            { desc: "Freight-out costs incurred to ship products to retail customers", type: "Nonmanufacturing / Period" },
+            { desc: "Fabric and synthetic padding utilized in custom chair production", type: "Direct Materials" }
+        ];
+
+        let currentItems = [];
+        let attemptCount = 0;
+        let isComplete = false;
+
+        function shuffle(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function setup() {
+            // Pick 10 random items from the master pool
+            let shuffled = shuffle(masterPool);
+            currentItems = shuffled.slice(0, 10);
+
+            const tbody = document.getElementById('cost-tbody');
+            tbody.innerHTML = "";
+
+            currentItems.forEach((item, idx) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${item.desc}</strong></td>
+                        <td>
+                            <select class="classification-select" id="select_${idx}">
+                                <option value="">-- Select Classification --</option>
+                                <option value="Direct Materials">Direct Materials</option>
+                                <option value="Direct Labor">Direct Labor</option>
+                                <option value="Manufacturing Overhead">Manufacturing Overhead</option>
+                                <option value="Nonmanufacturing / Period">Nonmanufacturing / Period</option>
+                            </select>
+                        </td>
+                    </tr>`;
+            });
+
+            isComplete = false;
+            attemptCount = 0;
+            document.getElementById('history-body').innerHTML = `<tr><td colspan="3">Complete the classification below to start tracking your progress.</td></tr>`;
+            document.getElementById('submit-btn').textContent = "Check My Work";
+            document.getElementById('submit-btn').style.backgroundColor = "var(--byuh-crimson)";
+        }
+
+        function grade() {
+            if (isComplete) {
+                setup();
+                return;
+            }
+            attemptCount++;
+
+            let correctCount = 0;
+            const totalItems = currentItems.length;
+
+            currentItems.forEach((item, idx) => {
+                const selectEl = document.getElementById(`select_${idx}`);
+                const studentVal = selectEl.value;
+
+                selectEl.classList.remove('correct', 'incorrect');
+
+                if (studentVal === item.type) {
+                    selectEl.classList.add('correct');
+                    selectEl.disabled = true;
+                    correctCount++;
+                } else if (studentVal !== "") {
+                    selectEl.classList.add('incorrect');
+                }
+            });
+
+            const score = Math.round((correctCount / totalItems) * 100);
+
+            const hBody = document.getElementById('history-body');
+            if (attemptCount === 1) hBody.innerHTML = "";
+            hBody.innerHTML = `<tr><td>${attemptCount}</td><td>${correctCount} / ${totalItems}</td><td>${score}%</td></tr>` + hBody.innerHTML;
+
+            const btn = document.getElementById('submit-btn');
+            if (score === 100) {
+                isComplete = true;
+                btn.textContent = "Great Job! Generate New Problem";
+                btn.style.backgroundColor = "var(--success)";
+            } else {
+                btn.textContent = "Try Again - Fix Your Errors";
+            }
+        }
+
+        document.getElementById('submit-btn').onclick = grade;
+        setup();
+    </script>
+</body>
+</html>
