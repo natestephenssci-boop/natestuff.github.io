@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity-Based Costing Challenge - BYU-Hawaii</title>
+    <style>
+        :root {
+            --byuh-crimson: #9E1B34;
+            --byuh-gold: #AA800E;
+            --byuh-light-gold: #fcf8ec;
+            --success: #2e7d32;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 { color: var(--byuh-crimson); text-align: center; margin-top: 10px; }
+        .instruction { text-align: center; font-size: 0.95em; max-width: 1200px; margin: 0 auto 15px; }
+
+        #tracker-container {
+            width: 100%;
+            max-width: 1250px;
+            margin: 0 auto 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--byuh-gold);
+            box-sizing: border-box;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .history-table th { background: #eee; padding: 8px; border-bottom: 2px solid var(--byuh-gold); }
+        .history-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+
+        .main-layout {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 20px;
+            max-width: 1250px;
+            margin: 0 auto;
+            align-items: flex-start;
+        }
+
+        #scenario-container {
+            flex: 1.2;
+            min-width: 450px;
+            background: white;
+            border: 2px solid var(--byuh-gold);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        #journal-container-wrapper {
+            flex: 1.2;
+            min-width: 450px;
+            background: white;
+            border: 2px solid var(--byuh-crimson);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.85em; margin-top: 10px; margin-bottom: 20px; }
+        .data-table th { background: var(--byuh-crimson); color: white; padding: 8px 6px; text-align: center; }
+        .data-table td { padding: 8px; border-bottom: 1px solid #ddd; vertical-align: middle; }
+        .data-num { text-align: right; font-family: monospace; }
+
+        #right-column {
+            width: 320px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: sticky;
+            top: 20px;
+        }
+
+        .journal-table { width: 100%; border-collapse: collapse; }
+        .journal-table th { background-color: var(--byuh-crimson); color: white; padding: 10px; font-size: 0.8em; text-transform: uppercase; }
+        .journal-table td { padding: 8px 6px; border: 1px solid #ddd; font-size: 0.9em; }
+
+        .amt-input {
+            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95em; font-family: monospace; text-align: right; background: #fffdf4;
+        }
+
+        /* --- Calculator Styling --- */
+        #calc-container {
+            width: 100%; background: #333; color: white; padding: 15px; border-radius: 8px;
+            box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        #calc-display {
+            width: 100%; background: #222; color: #0f0; text-align: right; padding: 10px; box-sizing: border-box;
+            font-family: 'Courier New', monospace; font-size: 1.2em; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; min-height: 44px;
+        }
+
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .calc-grid button { padding: 12px 0; cursor: pointer; border: none; border-radius: 4px; background: #555; color: white; font-weight: bold; font-size: 1em; }
+        .calc-grid button:hover { background: var(--byuh-gold); color: #333; }
+        .calc-grid .btn-op { background: var(--byuh-gold); color: #333; }
+
+        .correct { background-color: #e6ffe6 !important; border-color: #4CAF50 !important; }
+        .incorrect { background-color: #ffe6e6 !important; border-color: #f44336 !important; }
+        
+        #submit-btn {
+            display: block; width: 100%; max-width: 400px; margin: 15px auto 10px; padding: 15px;
+            background-color: var(--byuh-crimson); color: white; border: none; border-radius: 6px;
+            font-size: 1.1em; font-weight: bold; cursor: pointer;
+        }
+        #submit-btn:hover { background: #6b1223; }
+
+        @media (max-width: 1200px) {
+            .main-layout { flex-direction: column; align-items: stretch; }
+            #right-column { width: 100%; position: relative; top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Activity-Based Costing & Product Costing Challenge</h1>
+    <p class="instruction">
+        Review our Laie manufacturing plant's activity cost pools and product production details on the left. Enter your step-by-step calculations in the tasks panel, using the floating calculator on the far right as needed.
+    </p>
+
+    <div id="tracker-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Attempt</th>
+                    <th>Components Correct</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="3">Complete the computations below to start tracking your progress.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="main-layout">
+        <!-- Data Provided (Left) -->
+        <div id="scenario-container">
+            <h3 style="text-align: center; color: var(--byuh-crimson); margin-top:0;">Activity Cost Pools & Expected Activity</h3>
+            <table class="data-table" id="pools-table-view"></table>
+
+            <h3 style="text-align: center; color: var(--byuh-crimson); margin-top:10px;">Product Production & Consumption Data</h3>
+            <table class="data-table" id="products-table-view"></table>
+        </div>
+
+        <!-- Student Tasks / Journal Entry (Center) -->
+        <div id="journal-container-wrapper">
+            <h3 style="text-align: center; color: var(--byuh-crimson); margin-top:0;">Student Computation Tasks</h3>
+            <table class="journal-table">
+                <thead>
+                    <tr><th style="width: 70%;">Step / Metric</th><th style="width: 30%;">Amount ($)</th></tr>
+                </thead>
+                <tbody id="journal-body">
+                    <tr style="background:#eee;"><td colspan="2"><strong style="color:var(--byuh-crimson);">1. Activity Rates</strong></td></tr>
+                    <tr><td>Machine Setup Rate ($/setup)</td><td><input type="text" class="amt-input" id="ans-rate-setup" placeholder="0.00"></td></tr>
+                    <tr><td>Quality Inspection Rate ($/insp)</td><td><input type="text" class="amt-input" id="ans-rate-insp" placeholder="0.00"></td></tr>
+                    <tr><td>Customer Order Rate ($/order)</td><td><input type="text" class="amt-input" id="ans-rate-order" placeholder="0.00"></td></tr>
+
+                    <tr style="background:#eee;"><td colspan="2"><strong style="color:var(--byuh-crimson);">2. Product Alpha Allocations</strong></td></tr>
+                    <tr><td>Setup Overhead Allocated ($)</td><td><input type="text" class="amt-input" id="ans-alpha-oh-setup" placeholder="0"></td></tr>
+                    <tr><td>Inspection Overhead Allocated ($)</td><td><input type="text" class="amt-input" id="ans-alpha-oh-insp" placeholder="0"></td></tr>
+                    <tr><td>Order Overhead Allocated ($)</td><td><input type="text" class="amt-input" id="ans-alpha-oh-order" placeholder="0"></td></tr>
+                    <tr><td>Total Allocated Overhead ($)</td><td><input type="text" class="amt-input" id="ans-alpha-oh" placeholder="0"></td></tr>
+                    <tr><td>Overhead Cost per Unit ($/unit)</td><td><input type="text" class="amt-input" id="ans-alpha-ohunit" placeholder="0.00"></td></tr>
+                    <tr><td><strong>Total Product Cost per Unit ($)</strong></td><td><input type="text" class="amt-input" id="ans-alpha-total" placeholder="0.00"></td></tr>
+
+                    <tr style="background:#eee;"><td colspan="2"><strong style="color:var(--byuh-crimson);">3. Product Beta Allocations</strong></td></tr>
+                    <tr><td>Setup Overhead Allocated ($)</td><td><input type="text" class="amt-input" id="ans-beta-oh-setup" placeholder="0"></td></tr>
+                    <tr><td>Inspection Overhead Allocated ($)</td><td><input type="text" class="amt-input" id="ans-beta-oh-insp" placeholder="0"></td></tr>
+                    <tr><td>Order Overhead Allocated ($)</td><td><input type="text" class="amt-input" id="ans-beta-oh-order" placeholder="0"></td></tr>
+                    <tr><td>Total Allocated Overhead ($)</td><td><input type="text" class="amt-input" id="ans-beta-oh" placeholder="0"></td></tr>
+                    <tr><td>Overhead Cost per Unit ($/unit)</td><td><input type="text" class="amt-input" id="ans-beta-ohunit" placeholder="0.00"></td></tr>
+                    <tr><td><strong>Total Product Cost per Unit ($)</strong></td><td><input type="text" class="amt-input" id="ans-beta-total" placeholder="0.00"></td></tr>
+                </tbody>
+            </table>
+            <button id="submit-btn">Check My Work</button>
+        </div>
+
+        <!-- Floating Calculator (Far Right) -->
+        <div id="right-column">
+            <div id="calc-container">
+                <div id="calc-display">0</div>
+                <div class="calc-grid">
+                    <button onclick="calcClear()">C</button>
+                    <button onclick="calcOp('/')" class="btn-op">÷</button>
+                    <button onclick="calcOp('*')" class="btn-op">×</button>
+                    <button onclick="calcClear()">Del</button>
+                    <button onclick="calcNum('7')">7</button><button onclick="calcNum('8')">8</button><button onclick="calcNum('9')">9</button>
+                    <button onclick="calcOp('-')" class="btn-op">−</button>
+                    <button onclick="calcNum('4')">4</button><button onclick="calcNum('5')">5</button><button onclick="calcNum('6')">6</button>
+                    <button onclick="calcOp('+')" class="btn-op">+</button>
+                    <button onclick="calcNum('1')">1</button><button onclick="calcNum('2')">2</button><button onclick="calcNum('3')">3</button>
+                    <button onclick="calcEq()" style="grid-row: span 2; background: var(--byuh-crimson);">=</button>
+                    <button onclick="calcNum('0')" style="grid-column: span 2;">0</button><button onclick="calcNum('.')">.</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scenario = {};
+        let attemptCount = 0;
+        let isComplete = false;
+
+        function rand(min, max) { return Math.floor(Math.random() * (max - min + 1) + min); }
+
+        function setup() {
+            if (!scenario.setupCost) {
+                let setupCost = rand(30, 60) * 1000;
+                let inspCost = rand(20, 50) * 1000;
+                let orderCost = rand(15, 35) * 1000;
+
+                let setupTotal = rand(40, 80);
+                let inspTotal = rand(150, 300);
+                let orderTotal = rand(80, 150);
+
+                let rateSetup = setupCost / setupTotal;
+                let rateInsp = inspCost / inspTotal;
+                let rateOrder = orderCost / orderTotal;
+
+                // Product Alpha
+                let alphaVol = rand(800, 1500);
+                let alphaDM = rand(15, 30);
+                let alphaDL = rand(8, 18);
+                let alphaSetups = rand(15, 25);
+                let alphaInsp = rand(60, 100);
+                let alphaOrders = rand(25, 45);
+
+                let alphaSetupOH = alphaSetups * rateSetup;
+                let alphaInspOH = alphaInsp * rateInsp;
+                let alphaOrderOH = alphaOrders * rateOrder;
+                let alphaOH = alphaSetupOH + alphaInspOH + alphaOrderOH;
+                let alphaOHUnit = alphaOH / alphaVol;
+                let alphaTotalUnit = alphaDM + alphaDL + alphaOHUnit;
+
+                // Product Beta
+                let betaVol = rand(1800, 3000);
+                let betaDM = rand(10, 20);
+                let betaDL = rand(5, 12);
+                let betaSetups = setupTotal - alphaSetups;
+                let betaInsp = inspTotal - alphaInsp;
+                let betaOrders = orderTotal - alphaOrders;
+
+                let betaSetupOH = betaSetups * rateSetup;
+                let betaInspOH = betaInsp * rateInsp;
+                let betaOrderOH = betaOrders * rateOrder;
+                let betaOH = betaSetupOH + betaInspOH + betaOrderOH;
+                let betaOHUnit = betaOH / betaVol;
+                let betaTotalUnit = betaDM + betaDL + betaOHUnit;
+
+                scenario = {
+                    setupCost, inspCost, orderCost,
+                    setupTotal, inspTotal, orderTotal,
+                    rateSetup, rateInsp, rateOrder,
+                    alphaVol, alphaDM, alphaDL, alphaSetups, alphaInsp, alphaOrders, 
+                    alphaSetupOH, alphaInspOH, alphaOrderOH, alphaOH, alphaOHUnit, alphaTotalUnit,
+                    betaVol, betaDM, betaDL, betaSetups, betaInsp, betaOrders, 
+                    betaSetupOH, betaInspOH, betaOrderOH, betaOH, betaOHUnit, betaTotalUnit
+                };
+            }
+
+            document.getElementById('pools-table-view').innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Activity Cost Pool</th>
+                        <th>Estimated Overhead ($)</th>
+                        <th>Expected Activity (Total)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Machine Setup</td><td class="data-num">$${scenario.setupCost.toLocaleString()}</td><td class="data-num">${scenario.setupTotal} setups</td></tr>
+                    <tr><td>Quality Inspections</td><td class="data-num">$${scenario.inspCost.toLocaleString()}</td><td class="data-num">${scenario.inspTotal} inspections</td></tr>
+                    <tr><td>Customer Orders</td><td class="data-num">$${scenario.orderCost.toLocaleString()}</td><td class="data-num">${scenario.orderTotal} orders</td></tr>
+                </tbody>
+            `;
+
+            document.getElementById('products-table-view').innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Production Metric</th>
+                        <th>Product Alpha</th>
+                        <th>Product Beta</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Production Volume (units)</td><td class="data-num">${scenario.alphaVol.toLocaleString()}</td><td class="data-num">${scenario.betaVol.toLocaleString()}</td></tr>
+                    <tr><td>Direct Materials Cost per Unit</td><td class="data-num">$${scenario.alphaDM.toFixed(2)}</td><td class="data-num">$${scenario.betaDM.toFixed(2)}</td></tr>
+                    <tr><td>Direct Labor Cost per Unit</td><td class="data-num">$${scenario.alphaDL.toFixed(2)}</td><td class="data-num">$${scenario.betaDL.toFixed(2)}</td></tr>
+                    <tr><td>Machine Setups Consumed</td><td class="data-num">${scenario.alphaSetups} setups</td><td class="data-num">${scenario.betaSetups} setups</td></tr>
+                    <tr><td>Quality Inspections Consumed</td><td class="data-num">${scenario.alphaInsp} inspections</td><td class="data-num">${scenario.betaInsp} inspections</td></tr>
+                    <tr><td>Customer Orders Consumed</td><td class="data-num">${scenario.alphaOrders} orders</td><td class="data-num">${scenario.betaOrders} orders</td></tr>
+                </tbody>
+            `;
+
+            document.querySelectorAll('.amt-input').forEach(input => {
+                input.value = "";
+                input.disabled = false;
+                input.classList.remove('correct', 'incorrect');
+            });
+        }
+
+        function applyNewProblem() {
+            isComplete = false;
+            attemptCount = 0;
+            scenario = {};
+            document.getElementById('history-body').innerHTML = `<tr><td colspan="3">Complete the computations below to start tracking your progress.</td></tr>`;
+            document.getElementById('submit-btn').textContent = "Check My Work";
+            document.getElementById('submit-btn').style.backgroundColor = "var(--byuh-crimson)";
+            setup();
+        }
+
+        // --- CALCULATOR & KEYBOARD ---
+        let calcVal = "";
+        function calcNum(n) { calcVal += n; updateDisp(); }
+        function calcOp(op) { calcVal += " " + op + " "; updateDisp(); }
+        function calcClear() { calcVal = ""; updateDisp(); }
+        
+        function updateDisp() { 
+            const parts = calcVal.split(' ');
+            const formatted = parts.map(p => {
+                if(!isNaN(p) && p !== "") return Number(p).toLocaleString();
+                return p;
+            }).join(' ');
+            document.getElementById('calc-display').innerText = formatted || "0"; 
+        }
+
+        function calcEq() { 
+            try { 
+                let res = eval(calcVal);
+                calcVal = res.toString(); 
+                updateDisp(); 
+            } catch { 
+                calcVal = "Error"; updateDisp(); calcVal = ""; 
+            } 
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
+            if (e.key >= '0' && e.key <= '9') calcNum(e.key);
+            if (['+', '-', '*', '/'].includes(e.key)) calcOp(e.key);
+            if (e.key === 'Enter') { e.preventDefault(); calcEq(); }
+            if (e.key === 'Backspace') { e.preventDefault(); calcClear(); }
+            if (e.key === '.') calcNum('.');
+        });
+
+        document.addEventListener('input', e => {
+            if (e.target.classList.contains('amt-input')) {
+                let val = e.target.value.replace(/,/g, '');
+                if(!isNaN(val) && val !== "") {
+                    if(val.includes('.')) {
+                        let parts = val.split('.');
+                        e.target.value = Number(parts[0]).toLocaleString() + '.' + parts[1];
+                    } else {
+                        e.target.value = Number(val).toLocaleString();
+                    }
+                }
+            }
+        });
+
+        // --- GRADING ---
+        function grade() {
+            if(isComplete) { 
+                applyNewProblem();
+                return; 
+            }
+            attemptCount++;
+
+            const fields = [
+                { id: 'ans-rate-setup', val: scenario.rateSetup, tolerance: 0.1 },
+                { id: 'ans-rate-insp', val: scenario.rateInsp, tolerance: 0.1 },
+                { id: 'ans-rate-order', val: scenario.rateOrder, tolerance: 0.1 },
+                { id: 'ans-alpha-oh-setup', val: scenario.alphaSetupOH, tolerance: 10 },
+                { id: 'ans-alpha-oh-insp', val: scenario.alphaInspOH, tolerance: 10 },
+                { id: 'ans-alpha-oh-order', val: scenario.alphaOrderOH, tolerance: 10 },
+                { id: 'ans-alpha-oh', val: scenario.alphaOH, tolerance: 10 },
+                { id: 'ans-alpha-ohunit', val: scenario.alphaOHUnit, tolerance: 0.1 },
+                { id: 'ans-alpha-total', val: scenario.alphaTotalUnit, tolerance: 0.1 },
+                { id: 'ans-beta-oh-setup', val: scenario.betaSetupOH, tolerance: 10 },
+                { id: 'ans-beta-oh-insp', val: scenario.betaInspOH, tolerance: 10 },
+                { id: 'ans-beta-oh-order', val: scenario.betaOrderOH, tolerance: 10 },
+                { id: 'ans-beta-oh', val: scenario.betaOH, tolerance: 10 },
+                { id: 'ans-beta-ohunit', val: scenario.betaOHUnit, tolerance: 0.1 },
+                { id: 'ans-beta-total', val: scenario.betaTotalUnit, tolerance: 0.1 }
+            ];
+
+            let correctCount = 0;
+            const totalComponents = fields.length;
+
+            fields.forEach(f => {
+                const el = document.getElementById(f.id);
+                const studentVal = parseFloat(el.value.replace(/,/g, '')) || 0;
+
+                el.classList.remove('correct', 'incorrect');
+                if (Math.abs(studentVal - f.val) <= f.tolerance) {
+                    el.classList.add('correct');
+                    el.disabled = true;
+                    correctCount++;
+                } else if (el.value !== "") {
+                    el.classList.add('incorrect');
+                }
+            });
+
+            const score = Math.round((correctCount / totalComponents) * 100);
+
+            const hBody = document.getElementById('history-body');
+            if(attemptCount === 1) hBody.innerHTML = "";
+            hBody.innerHTML = `<tr><td>${attemptCount}</td><td>${correctCount} / ${totalComponents}</td><td>${score}%</td></tr>` + hBody.innerHTML;
+
+            const btn = document.getElementById('submit-btn');
+            if(score === 100) {
+                isComplete = true;
+                btn.textContent = "Great Job! Generate New Problem";
+                btn.style.backgroundColor = "var(--success)";
+            } else {
+                btn.textContent = "Try Again - Fix Your Errors";
+            }
+        }
+
+        document.getElementById('submit-btn').onclick = grade;
+        setup();
+    </script>
+</body>
+</html>
