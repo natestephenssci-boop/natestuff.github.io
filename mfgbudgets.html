@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detailed Operating Budgets Challenge</title>
+    <style>
+        :root {
+            --byuh-crimson: #9E1B34;
+            --byuh-gold: #AA800E;
+            --byuh-light-gold: #fcf8ec;
+            --success: #2e7d32;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 { color: var(--byuh-crimson); text-align: center; margin-top: 10px; }
+        .instruction { text-align: center; font-size: 0.95em; max-width: 1200px; margin: 0 auto 15px; }
+
+        #tracker-container {
+            width: 100%;
+            max-width: 1250px;
+            margin: 0 auto 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--byuh-gold);
+            box-sizing: border-box;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .history-table th { background: #eee; padding: 8px; border-bottom: 2px solid var(--byuh-gold); }
+        .history-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+
+        .main-layout {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 20px;
+            max-width: 1250px;
+            margin: 0 auto;
+            align-items: flex-start;
+        }
+
+        #scenario-container {
+            flex: 1.1;
+            min-width: 400px;
+            background: white;
+            border: 2px solid var(--byuh-gold);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        #journal-container-wrapper {
+            flex: 1.4;
+            min-width: 480px;
+            background: white;
+            border: 2px solid var(--byuh-crimson);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.85em; margin-top: 10px; margin-bottom: 20px; }
+        .data-table th { background: var(--byuh-crimson); color: white; padding: 8px 6px; text-align: center; }
+        .data-table td { padding: 8px; border-bottom: 1px solid #ddd; vertical-align: middle; }
+        .data-num { text-align: right; font-family: monospace; }
+
+        #right-column {
+            width: 320px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: sticky;
+            top: 20px;
+        }
+
+        .journal-table { width: 100%; border-collapse: collapse; }
+        .journal-table th { background-color: var(--byuh-crimson); color: white; padding: 10px; font-size: 0.8em; text-transform: uppercase; }
+        .journal-table td { padding: 8px 6px; border: 1px solid #ddd; font-size: 0.9em; }
+
+        .amt-input {
+            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95em; font-family: monospace; text-align: right; background: #fffdf4;
+        }
+
+        /* --- Calculator Styling --- */
+        #calc-container {
+            width: 100%; background: #333; color: white; padding: 15px; border-radius: 8px;
+            box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        #calc-display {
+            width: 100%; background: #222; color: #0f0; text-align: right; padding: 10px; box-sizing: border-box;
+            font-family: 'Courier New', monospace; font-size: 1.2em; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; min-height: 44px;
+        }
+
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .calc-grid button { padding: 12px 0; cursor: pointer; border: none; border-radius: 4px; background: #555; color: white; font-weight: bold; font-size: 1em; }
+        .calc-grid button:hover { background: var(--byuh-gold); color: #333; }
+        .calc-grid .btn-op { background: var(--byuh-gold); color: #333; }
+
+        .correct { background-color: #e6ffe6 !important; border-color: #4CAF50 !important; }
+        .incorrect { background-color: #ffe6e6 !important; border-color: #f44336 !important; }
+        
+        #submit-btn {
+            display: block; width: 100%; max-width: 400px; margin: 15px auto 10px; padding: 15px;
+            background-color: var(--byuh-crimson); color: white; border: none; border-radius: 6px;
+            font-size: 1.1em; font-weight: bold; cursor: pointer;
+        }
+        #submit-btn:hover { background: #6b1223; }
+
+        @media (max-width: 1200px) {
+            .main-layout { flex-direction: column; align-items: stretch; }
+            #right-column { width: 100%; position: relative; top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Detailed Operating Budgets Challenge</h1>
+    <p class="instruction">
+        Review our production schedules and cost parameters on the left. Step through and complete each line item for the direct materials, direct labor, and manufacturing overhead budgets for July in the tasks panel, using the floating calculator on the far right as needed.
+    </p>
+
+    <div id="tracker-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Attempt</th>
+                    <th>Components Correct</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="3">Complete the computations below to start tracking your progress.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="main-layout">
+        <!-- Data Provided (Left) -->
+        <div id="scenario-container">
+            <h3 style="text-align: center; color: var(--byuh-crimson); margin-top:0;">Production & Cost Parameters</h3>
+            <table class="data-table" id="budget-data-view"></table>
+        </div>
+
+        <!-- Student Tasks / Journal Entry (Center) -->
+        <div id="journal-container-wrapper">
+            <h3 style="text-align: center; color: var(--byuh-crimson); margin-top:0;">Student Operating Budgets (July)</h3>
+            <table class="journal-table">
+                <thead>
+                    <tr><th style="width: 70%;">Budget Metric / Intermediate Step</th><th style="width: 30%;">Amount</th></tr>
+                </thead>
+                <tbody id="journal-body">
+                    <tr style="background:#eee;"><td colspan="2"><strong style="color:var(--byuh-crimson);">1. Direct Materials Budget</strong></td></tr>
+                    <tr><td>Raw Materials Needed for Production (units)</td><td><input type="text" class="amt-input" id="ans-rm-prod" placeholder="0"></td></tr>
+                    <tr><td>Desired Ending Raw Materials Inventory (units)</td><td><input type="text" class="amt-input" id="ans-rm-end" placeholder="0"></td></tr>
+                    <tr><td>Total Raw Materials Needed (units)</td><td><input type="text" class="amt-input" id="ans-rm-total" placeholder="0"></td></tr>
+                    <tr><td>Beginning Raw Materials Inventory (units)</td><td><input type="text" class="amt-input" id="ans-rm-beg" placeholder="0"></td></tr>
+                    <tr><td>Raw Materials to be Purchased (units)</td><td><input type="text" class="amt-input" id="ans-rm-purch" placeholder="0"></td></tr>
+                    <tr><td>Cost per Board Foot ($)</td><td><input type="text" class="amt-input" id="ans-rm-costperunit" placeholder="0.00"></td></tr>
+                    <tr><td><strong>Cost of Raw Materials Purchases ($)</strong></td><td><input type="text" class="amt-input" id="ans-rm-cost" placeholder="0"></td></tr>
+
+                    <tr style="background:#eee;"><td colspan="2"><strong style="color:var(--byuh-crimson);">2. Direct Labor Budget</strong></td></tr>
+                    <tr><td>Budgeted Production (units)</td><td><input type="text" class="amt-input" id="ans-dl-prod" placeholder="0"></td></tr>
+                    <tr><td>Direct Labor-Hours Required per Unit (DLHs)</td><td><input type="text" class="amt-input" id="ans-dl-hrsperunit" placeholder="0.0"></td></tr>
+                    <tr><td>Total Direct Labor-Hours Required (DLHs)</td><td><input type="text" class="amt-input" id="ans-dl-hours" placeholder="0"></td></tr>
+                    <tr><td>Direct Labor Wage Rate ($ per hour)</td><td><input type="text" class="amt-input" id="ans-dl-rate" placeholder="0.00"></td></tr>
+                    <tr><td><strong>Total Direct Labor Cost ($)</strong></td><td><input type="text" class="amt-input" id="ans-dl-cost" placeholder="0"></td></tr>
+
+                    <tr style="background:#eee;"><td colspan="2"><strong style="color:var(--byuh-crimson);">3. Manufacturing Overhead Budget</strong></td></tr>
+                    <tr><td>Total Direct Labor-Hours Required (DLHs)</td><td><input type="text" class="amt-input" id="ans-moh-hours" placeholder="0"></td></tr>
+                    <tr><td>Variable Manufacturing Overhead Rate ($ per DLH)</td><td><input type="text" class="amt-input" id="ans-moh-varrate" placeholder="0.00"></td></tr>
+                    <tr><td>Total Variable Manufacturing Overhead ($)</td><td><input type="text" class="amt-input" id="ans-var-moh" placeholder="0"></td></tr>
+                    <tr><td>Fixed Manufacturing Overhead ($)</td><td><input type="text" class="amt-input" id="ans-moh-fixed" placeholder="0"></td></tr>
+                    <tr><td><strong>Total Manufacturing Overhead ($)</strong></td><td><input type="text" class="amt-input" id="ans-total-moh" placeholder="0"></td></tr>
+                </tbody>
+            </table>
+            <button id="submit-btn">Check My Work</button>
+        </div>
+
+        <!-- Floating Calculator (Far Right) -->
+        <div id="right-column">
+            <div id="calc-container">
+                <div id="calc-display">0</div>
+                <div class="calc-grid">
+                    <button onclick="calcClear()">C</button>
+                    <button onclick="calcOp('/')" class="btn-op">÷</button>
+                    <button onclick="calcOp('*')" class="btn-op">×</button>
+                    <button onclick="calcClear()">Del</button>
+                    <button onclick="calcNum('7')">7</button><button onclick="calcNum('8')">8</button><button onclick="calcNum('9')">9</button>
+                    <button onclick="calcOp('-')" class="btn-op">−</button>
+                    <button onclick="calcNum('4')">4</button><button onclick="calcNum('5')">5</button><button onclick="calcNum('6')">6</button>
+                    <button onclick="calcOp('+')" class="btn-op">+</button>
+                    <button onclick="calcNum('1')">1</button><button onclick="calcNum('2')">2</button><button onclick="calcNum('3')">3</button>
+                    <button onclick="calcEq()" style="grid-row: span 2; background: var(--byuh-crimson);">=</button>
+                    <button onclick="calcNum('0')" style="grid-column: span 2;">0</button><button onclick="calcNum('.')">.</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scenario = {};
+        let attemptCount = 0;
+        let isComplete = false;
+
+        function rand(min, max) { return Math.floor(Math.random() * (max - min + 1) + min); }
+
+        function setup() {
+            if (!scenario.julyProduction) {
+                let julyProduction = rand(18, 35) * 100;     // e.g., 2,000 units
+                let augustProduction = rand(22, 45) * 100;   // e.g., 2,400 units
+                let rmPerUnit = rand(2, 5);                  // e.g., 3 board feet per unit
+                let rmCostPerUnit = rand(3, 7);              // e.g., $4 per board foot
+                let endingRMPercent = rand(10, 25);          // e.g., 20% of next month's RM needs
+                let begRM = rand(30, 80) * 10;               // e.g., 500 board feet
+                
+                let dlHoursPerUnit = rand(10, 25) / 10;      // e.g., 1.5 DLHs per unit
+                let dlWageRate = rand(15, 25);               // e.g., $18 per hour
+                
+                let varMOHRate = rand(4, 9);                 // e.g., $6 per DLH
+                let fixedMOHMonthly = rand(10, 25) * 1000;   // e.g., $15,000 fixed MOH per month
+
+                // Calculations
+                let rmNeededJuly = julyProduction * rmPerUnit;
+                let rmNeededAugust = augustProduction * rmPerUnit;
+                let desiredEndingRM = Math.round(rmNeededAugust * (endingRMPercent / 100));
+                let totalRMNeeded = rmNeededJuly + desiredEndingRM;
+                let rmToPurchase = totalRMNeeded - begRM;
+                let rmPurchaseCost = rmToPurchase * rmCostPerUnit;
+
+                let totalDLHours = julyProduction * dlHoursPerUnit;
+                let totalDLCost = totalDLHours * dlWageRate;
+
+                let totalVarMOH = totalDLHours * varMOHRate;
+                let totalMOH = totalVarMOH + fixedMOHMonthly;
+
+                scenario = {
+                    julyProduction,
+                    augustProduction,
+                    rmPerUnit,
+                    rmCostPerUnit,
+                    endingRMPercent,
+                    begRM,
+                    dlHoursPerUnit,
+                    dlWageRate,
+                    varMOHRate,
+                    fixedMOHMonthly,
+                    rmNeededJuly,
+                    desiredEndingRM,
+                    totalRMNeeded,
+                    rmToPurchase,
+                    rmPurchaseCost,
+                    totalDLHours,
+                    totalDLCost,
+                    totalVarMOH,
+                    totalMOH
+                };
+            }
+
+            document.getElementById('budget-data-view').innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Budgeted Production (July)</td><td class="data-num">${scenario.julyProduction.toLocaleString()} units</td></tr>
+                    <tr><td>Budgeted Production (August - Following Month)</td><td class="data-num">${scenario.augustProduction.toLocaleString()} units</td></tr>
+                    <tr><td>Raw Materials Required per Unit</td><td class="data-num">${scenario.rmPerUnit} board feet</td></tr>
+                    <tr><td>Cost per Board Foot of Raw Materials</td><td class="data-num">$${scenario.rmCostPerUnit.toFixed(2)}</td></tr>
+                    <tr><td>Desired Ending Raw Materials Inventory</td><td class="data-num">${scenario.endingRMPercent}% of next month's raw materials needs</td></tr>
+                    <tr><td>Beginning Raw Materials Inventory (July 1)</td><td class="data-num">${scenario.begRM.toLocaleString()} board feet</td></tr>
+                    <tr><td>Direct Labor-Hours Required per Unit</td><td class="data-num">${scenario.dlHoursPerUnit} DLHs</td></tr>
+                    <tr><td>Direct Labor Wage Rate</td><td class="data-num">$${scenario.dlWageRate.toFixed(2)} per hour</td></tr>
+                    <tr><td>Variable Manufacturing Overhead Rate</td><td class="data-num">$${scenario.varMOHRate.toFixed(2)} per DLH</td></tr>
+                    <tr><td>Fixed Manufacturing Overhead (Monthly)</td><td class="data-num">$${scenario.fixedMOHMonthly.toLocaleString()}</td></tr>
+                </tbody>
+            `;
+
+            document.querySelectorAll('.amt-input').forEach(input => {
+                input.value = "";
+                input.disabled = false;
+                input.classList.remove('correct', 'incorrect');
+            });
+        }
+
+        function applyNewProblem() {
+            isComplete = false;
+            attemptCount = 0;
+            scenario = {};
+            document.getElementById('history-body').innerHTML = `<tr><td colspan="3">Complete the computations below to start tracking your progress.</td></tr>`;
+            document.getElementById('submit-btn').textContent = "Check My Work";
+            document.getElementById('submit-btn').style.backgroundColor = "var(--byuh-crimson)";
+            setup();
+        }
+
+        // --- CALCULATOR & KEYBOARD ---
+        let calcVal = "";
+        function calcNum(n) { calcVal += n; updateDisp(); }
+        function calcOp(op) { calcVal += " " + op + " "; updateDisp(); }
+        function calcClear() { calcVal = ""; updateDisp(); }
+        
+        function updateDisp() { 
+            const parts = calcVal.split(' ');
+            const formatted = parts.map(p => {
+                if(!isNaN(p) && p !== "") return Number(p).toLocaleString();
+                return p;
+            }).join(' ');
+            document.getElementById('calc-display').innerText = formatted || "0"; 
+        }
+
+        function calcEq() { 
+            try { 
+                let res = eval(calcVal);
+                calcVal = res.toString(); 
+                updateDisp(); 
+            } catch { 
+                calcVal = "Error"; updateDisp(); calcVal = ""; 
+            } 
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
+            if (e.key >= '0' && e.key <= '9') calcNum(e.key);
+            if (['+', '-', '*', '/'].includes(e.key)) calcOp(e.key);
+            if (e.key === 'Enter') { e.preventDefault(); calcEq(); }
+            if (e.key === 'Backspace') { e.preventDefault(); calcClear(); }
+            if (e.key === '.') calcNum('.');
+        });
+
+        document.addEventListener('input', e => {
+            if (e.target.classList.contains('amt-input')) {
+                let val = e.target.value.replace(/,/g, '');
+                if(!isNaN(val) && val !== "") {
+                    if(val.includes('.')) {
+                        let parts = val.split('.');
+                        e.target.value = Number(parts[0]).toLocaleString() + '.' + parts[1];
+                    } else {
+                        e.target.value = Number(val).toLocaleString();
+                    }
+                }
+            }
+        });
+
+        // --- GRADING ---
+        function grade() {
+            if(isComplete) { 
+                applyNewProblem();
+                return; 
+            }
+            attemptCount++;
+
+            const fields = [
+                { id: 'ans-rm-prod', val: scenario.rmNeededJuly, tolerance: 5 },
+                { id: 'ans-rm-end', val: scenario.desiredEndingRM, tolerance: 5 },
+                { id: 'ans-rm-total', val: scenario.totalRMNeeded, tolerance: 5 },
+                { id: 'ans-rm-beg', val: scenario.begRM, tolerance: 5 },
+                { id: 'ans-rm-purch', val: scenario.rmToPurchase, tolerance: 5 },
+                { id: 'ans-rm-costperunit', val: scenario.rmCostPerUnit, tolerance: 0.01 },
+                { id: 'ans-rm-cost', val: scenario.rmPurchaseCost, tolerance: 10 },
+                { id: 'ans-dl-prod', val: scenario.julyProduction, tolerance: 1 },
+                { id: 'ans-dl-hrsperunit', val: scenario.dlHoursPerUnit, tolerance: 0.1 },
+                { id: 'ans-dl-hours', val: scenario.totalDLHours, tolerance: 1 },
+                { id: 'ans-dl-rate', val: scenario.dlWageRate, tolerance: 0.01 },
+                { id: 'ans-dl-cost', val: scenario.totalDLCost, tolerance: 10 },
+                { id: 'ans-moh-hours', val: scenario.totalDLHours, tolerance: 1 },
+                { id: 'ans-moh-varrate', val: scenario.varMOHRate, tolerance: 0.01 },
+                { id: 'ans-var-moh', val: scenario.totalVarMOH, tolerance: 10 },
+                { id: 'ans-moh-fixed', val: scenario.fixedMOHMonthly, tolerance: 10 },
+                { id: 'ans-total-moh', val: scenario.totalMOH, tolerance: 10 }
+            ];
+
+            let correctCount = 0;
+            const totalComponents = fields.length;
+
+            fields.forEach(f => {
+                const el = document.getElementById(f.id);
+                const studentVal = parseFloat(el.value.replace(/,/g, '')) || 0;
+
+                el.classList.remove('correct', 'incorrect');
+                if (Math.abs(studentVal - f.val) <= f.tolerance) {
+                    el.classList.add('correct');
+                    el.disabled = true;
+                    correctCount++;
+                } else if (el.value !== "") {
+                    el.classList.add('incorrect');
+                }
+            });
+
+            const score = Math.round((correctCount / totalComponents) * 100);
+
+            const hBody = document.getElementById('history-body');
+            if(attemptCount === 1) hBody.innerHTML = "";
+            hBody.innerHTML = `<tr><td>${attemptCount}</td><td>${correctCount} / ${totalComponents}</td><td>${score}%</td></tr>` + hBody.innerHTML;
+
+            const btn = document.getElementById('submit-btn');
+            if(score === 100) {
+                isComplete = true;
+                btn.textContent = "Great Job! Generate New Problem";
+                btn.style.backgroundColor = "var(--success)";
+            } else {
+                btn.textContent = "Try Again - Fix Your Errors";
+            }
+        }
+
+        document.getElementById('submit-btn').onclick = grade;
+        setup();
+    </script>
+</body>
+</html>
