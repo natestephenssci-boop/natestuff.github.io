@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Multi-Month Cash Budget Challenge</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #2980b9;
+            --light-bg: #f8f9fa;
+            --success: #27ae60;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 { color: var(--primary-color); text-align: center; margin-top: 10px; }
+        .instruction { text-align: center; font-size: 0.95em; max-width: 1200px; margin: 0 auto 15px; }
+
+        #tracker-container {
+            width: 100%;
+            max-width: 1250px;
+            margin: 0 auto 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--accent-color);
+            box-sizing: border-box;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .history-table th { background: #eee; padding: 8px; border-bottom: 2px solid var(--accent-color); }
+        .history-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+
+        .main-layout {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 20px;
+            max-width: 1250px;
+            margin: 0 auto;
+            align-items: flex-start;
+        }
+
+        #scenario-container {
+            flex: 1.2;
+            min-width: 450px;
+            background: white;
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        #journal-container-wrapper {
+            flex: 1.4;
+            min-width: 480px;
+            background: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.85em; margin-top: 10px; margin-bottom: 20px; }
+        .data-table th { background: var(--primary-color); color: white; padding: 8px 6px; text-align: center; }
+        .data-table td { padding: 8px; border-bottom: 1px solid #ddd; vertical-align: middle; }
+        .data-num { text-align: right; font-family: monospace; }
+
+        #right-column {
+            width: 320px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: sticky;
+            top: 20px;
+        }
+
+        .journal-table { width: 100%; border-collapse: collapse; }
+        .journal-table th { background-color: var(--primary-color); color: white; padding: 10px; font-size: 0.8em; text-transform: uppercase; }
+        .journal-table td { padding: 8px 6px; border: 1px solid #ddd; font-size: 0.9em; }
+
+        .amt-input {
+            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95em; font-family: monospace; text-align: right; background: #fffdf4;
+        }
+
+        /* --- Calculator Styling --- */
+        #calc-container {
+            width: 100%; background: #333; color: white; padding: 15px; border-radius: 8px;
+            box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        #calc-display {
+            width: 100%; background: #222; color: #0f0; text-align: right; padding: 10px; box-sizing: border-box;
+            font-family: 'Courier New', monospace; font-size: 1.2em; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; min-height: 44px;
+        }
+
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .calc-grid button { padding: 12px 0; cursor: pointer; border: none; border-radius: 4px; background: #555; color: white; font-weight: bold; font-size: 1em; }
+        .calc-grid button:hover { background: var(--accent-color); color: white; }
+        .calc-grid .btn-op { background: var(--accent-color); color: white; }
+
+        .correct { background-color: #e6ffe6 !important; border-color: #27ae60 !important; }
+        .incorrect { background-color: #ffe6e6 !important; border-color: #c0392b !important; }
+        
+        #submit-btn {
+            display: block; width: 100%; max-width: 400px; margin: 15px auto 10px; padding: 15px;
+            background-color: var(--primary-color); color: white; border: none; border-radius: 6px;
+            font-size: 1.1em; font-weight: bold; cursor: pointer;
+        }
+        #submit-btn:hover { background: #34495e; }
+
+        @media (max-width: 1200px) {
+            .main-layout { flex-direction: column; align-items: stretch; }
+            #right-column { width: 100%; position: relative; top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Advanced Multi-Month Cash Budget Challenge</h1>
+    <p class="instruction">
+        Review our multi-month sales projections, credit collection patterns, raw material purchase parameters, and disbursement policies on the left. Compute May cash collections, raw material disbursements, total cash available, and ending cash balances in the tasks panel, using the floating calculator on the far right as needed.
+    </p>
+
+    <div id="tracker-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Attempt</th>
+                    <th>Components Correct</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="3">Complete the computations below to start tracking your progress.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="main-layout">
+        <!-- Data Provided (Left) -->
+        <div id="scenario-container">
+            <h3 style="text-align: center; color: var(--primary-color); margin-top:0;">Operations & Credit Parameters</h3>
+            <table class="data-table" id="budget-data-view"></table>
+        </div>
+
+        <!-- Student Tasks / Journal Entry (Center) -->
+        <div id="journal-container-wrapper">
+            <h3 style="text-align: center; color: var(--primary-color); margin-top:0;">Student Cash Budget (May)</h3>
+            <table class="journal-table">
+                <thead>
+                    <tr><th style="width: 70%;">Cash Budget Metric / Step (May)</th><th style="width: 30%;">Amount ($)</th></tr>
+                </thead>
+                <tbody id="journal-body">
+                    <tr style="background:#eee;"><td colspan="2"><strong style="color:var(--primary-color);">1. Cash Collections from Customers (May)</strong></td></tr>
+                    <tr><td>Collections from April Sales (Collected in May)</td><td><input type="text" class="amt-input" id="ans-col-april" placeholder="0"></td></tr>
+                    <tr><td>Collections from May Sales (Collected in May)</td><td><input type="text" class="amt-input" id="ans-col-may" placeholder="0"></td></tr>
+                    <tr><td><strong>Total May Cash Collections</strong></td><td><input type="text" class="amt-input" id="ans-total-collections" placeholder="0"></td></tr>
+                    <tr><td>Cash Balance, May 1 (Beginning)</td><td><input type="text" class="amt-input" id="ans-beg-cash" placeholder="0"></td></tr>
+                    <tr><td><strong>Total Cash Available</strong></td><td><input type="text" class="amt-input" id="ans-total-available" placeholder="0"></td></tr>
+
+                    <tr style="background:#eee;"><td colspan="2"><strong style="color:var(--primary-color);">2. Direct Materials Disbursements (May)</strong></td></tr>
+                    <tr><td>Payments for April Material Purchases (Paid in May)</td><td><input type="text" class="amt-input" id="ans-pay-april" placeholder="0"></td></tr>
+                    <tr><td>Payments for May Material Purchases (Paid in May)</td><td><input type="text" class="amt-input" id="ans-pay-may" placeholder="0"></td></tr>
+                    <tr><td><strong>Total Direct Materials Disbursements</strong></td><td><input type="text" class="amt-input" id="ans-total-dm-disb" placeholder="0"></td></tr>
+
+                    <tr style="background:#eee;"><td colspan="2"><strong style="color:var(--primary-color);">3. Total Disbursements & Financing (May)</strong></td></tr>
+                    <tr><td>Direct Labor Disbursements (May)</td><td><input type="text" class="amt-input" id="ans-disb-dl" placeholder="0"></td></tr>
+                    <tr><td>Manufacturing Overhead Disbursements (May)</td><td><input type="text" class="amt-input" id="ans-disb-moh" placeholder="0"></td></tr>
+                    <tr><td>Selling & Administrative Expenses Disbursements (May)</td><td><input type="text" class="amt-input" id="ans-disb-sa" placeholder="0"></td></tr>
+                    <tr><td>Equipment Purchases / Capital Expenditures (May)</td><td><input type="text" class="amt-input" id="ans-disb-equip" placeholder="0"></td></tr>
+                    <tr><td><strong>Total Cash Disbursements (May)</strong></td><td><input type="text" class="amt-input" id="ans-total-disb" placeholder="0"></td></tr>
+
+                    <tr style="background:#eee;"><td colspan="2"><strong style="color:var(--primary-color);">4. Excess & Ending Cash (May)</strong></td></tr>
+                    <tr><td>Excess (Deficiency) of Cash Available over Disbursements</td><td><input type="text" class="amt-input" id="ans-excess" placeholder="0"></td></tr>
+                    <tr><td>Financing: Borrowing Required (to maintain minimum balance)</td><td><input type="text" class="amt-input" id="ans-borrowing" placeholder="0"></td></tr>
+                    <tr><td><strong>Cash Balance, May 31 (Ending)</strong></td><td><input type="text" class="amt-input" id="ans-end-cash" placeholder="0"></td></tr>
+                </tbody>
+            </table>
+            <button id="submit-btn">Check My Work</button>
+        </div>
+
+        <!-- Floating Calculator (Far Right) -->
+        <div id="right-column">
+            <div id="calc-container">
+                <div id="calc-display">0</div>
+                <div class="calc-grid">
+                    <button onclick="calcClear()">C</button>
+                    <button onclick="calcOp('/')" class="btn-op">÷</button>
+                    <button onclick="calcOp('*')" class="btn-op">×</button>
+                    <button onclick="calcClear()">Del</button>
+                    <button onclick="calcNum('7')">7</button><button onclick="calcNum('8')">8</button><button onclick="calcNum('9')">9</button>
+                    <button onclick="calcOp('-')" class="btn-op">−</button>
+                    <button onclick="calcNum('4')">4</button><button onclick="calcNum('5')">5</button><button onclick="calcNum('6')">6</button>
+                    <button onclick="calcOp('+')" class="btn-op">+</button>
+                    <button onclick="calcNum('1')">1</button><button onclick="calcNum('2')">2</button><button onclick="calcNum('3')">3</button>
+                    <button onclick="calcEq()" style="grid-row: span 2; background: var(--primary-color);">=</button>
+                    <button onclick="calcNum('0')" style="grid-column: span 2;">0</button><button onclick="calcNum('.')">.</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scenario = {};
+        let attemptCount = 0;
+        let isComplete = false;
+
+        function rand(min, max) { return Math.floor(Math.random() * (max - min + 1) + min); }
+
+        function setup() {
+            if (!scenario.aprilSales) {
+                let aprilSales = rand(150, 250) * 1000;    // e.g., $180,000
+                let maySales = rand(200, 320) * 1000;      // e.g., $250,000
+                
+                let aprilPurchases = rand(80, 140) * 1000; // e.g., $90,000
+                let mayPurchases = rand(100, 180) * 1000;  // e.g., $120,000
+
+                let collectionMonthOfSale = 60; // 60% collected in month of sale
+                let collectionFollowing = 40;   // 40% collected in month following sale
+
+                let paymentMonthOfPurchase = 70; // 70% paid in month of purchase
+                let paymentFollowing = 30;       // 30% paid in month following purchase
+
+                let begCash = rand(20, 45) * 1000;       // e.g., $30,000
+                let mayDL = rand(30, 55) * 1000;           // e.g., $40,000
+                let mayMOH = rand(20, 35) * 1000;          // e.g., $25,000
+                let maySA = rand(25, 45) * 1000;           // e.g., $35,000
+                let mayEquip = rand(10, 40) * 1000;        // e.g., $20,000
+                let minCash = 25000;                       // Minimum required cash balance
+
+                // May Calculations
+                let colFromApril = Math.round(aprilSales * (collectionFollowing / 100));
+                let colFromMay = Math.round(maySales * (collectionMonthOfSale / 100));
+                let totalCollections = colFromApril + colFromMay;
+                let totalAvailable = begCash + totalCollections;
+
+                let payFromApril = Math.round(aprilPurchases * (paymentFollowing / 100));
+                let payFromMay = Math.round(mayPurchases * (paymentMonthOfPurchase / 100));
+                let totalDMDisb = payFromApril + payFromMay;
+
+                let totalDisb = totalDMDisb + mayDL + mayMOH + maySA + mayEquip;
+                let excess = totalAvailable - totalDisb;
+
+                let borrowing = 0;
+                let endCash = excess;
+                if (excess < minCash) {
+                    borrowing = Math.ceil((minCash - excess) / 1000) * 1000;
+                    endCash = excess + borrowing;
+                }
+
+                scenario = {
+                    aprilSales,
+                    maySales,
+                    aprilPurchases,
+                    mayPurchases,
+                    collectionMonthOfSale,
+                    collectionFollowing,
+                    paymentMonthOfPurchase,
+                    paymentFollowing,
+                    begCash,
+                    mayDL,
+                    mayMOH,
+                    maySA,
+                    mayEquip,
+                    minCash,
+                    colFromApril,
+                    colFromMay,
+                    totalCollections,
+                    totalAvailable,
+                    payFromApril,
+                    payFromMay,
+                    totalDMDisb,
+                    totalDisb,
+                    excess,
+                    borrowing,
+                    endCash
+                };
+            }
+
+            document.getElementById('budget-data-view').innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Parameter / Policy</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Budgeted Sales (April)</td><td class="data-num">$${scenario.aprilSales.toLocaleString()}</td></tr>
+                    <tr><td>Budgeted Sales (May)</td><td class="data-num">$${scenario.maySales.toLocaleString()}</td></tr>
+                    <tr><td>Accounts Receivable Collection Pattern</td><td class="data-num">${scenario.collectionMonthOfSale}% in month of sale, ${scenario.collectionFollowing}% in month following</td></tr>
+                    <tr><td>Raw Material Purchases (April)</td><td class="data-num">$${scenario.aprilPurchases.toLocaleString()}</td></tr>
+                    <tr><td>Raw Material Purchases (May)</td><td class="data-num">$${scenario.mayPurchases.toLocaleString()}</td></tr>
+                    <tr><td>Accounts Payable Payment Pattern</td><td class="data-num">${scenario.paymentMonthOfPurchase}% in month of purchase, ${scenario.paymentFollowing}% in month following</td></tr>
+                    <tr><td>Cash Balance, May 1 (Beginning)</td><td class="data-num">$${scenario.begCash.toLocaleString()}</td></tr>
+                    <tr><td>Direct Labor Disbursements (May)</td><td class="data-num">$${scenario.mayDL.toLocaleString()}</td></tr>
+                    <tr><td>Manufacturing Overhead Disbursements (May)</td><td class="data-num">$${scenario.mayMOH.toLocaleString()}</td></tr>
+                    <tr><td>Selling & Administrative Expenses (May)</td><td class="data-num">$${scenario.maySA.toLocaleString()}</td></tr>
+                    <tr><td>Equipment Purchases / Capital Expenditures (May)</td><td class="data-num">$${scenario.mayEquip.toLocaleString()}</td></tr>
+                    <tr><td>Minimum Required Cash Balance</td><td class="data-num">$${scenario.minCash.toLocaleString()}</td></tr>
+                </tbody>
+            `;
+
+            document.querySelectorAll('.amt-input').forEach(input => {
+                input.value = "";
+                input.disabled = false;
+                input.classList.remove('correct', 'incorrect');
+            });
+        }
+
+        function applyNewProblem() {
+            isComplete = false;
+            attemptCount = 0;
+            scenario = {};
+            document.getElementById('history-body').innerHTML = `<tr><td colspan="3">Complete the computations below to start tracking your progress.</td></tr>`;
+            document.getElementById('submit-btn').textContent = "Check My Work";
+            document.getElementById('submit-btn').style.backgroundColor = "var(--primary-color)";
+            setup();
+        }
+
+        // --- CALCULATOR & KEYBOARD ---
+        let calcVal = "";
+        function calcNum(n) { calcVal += n; updateDisp(); }
+        function calcOp(op) { calcVal += " " + op + " "; updateDisp(); }
+        function calcClear() { calcVal = ""; updateDisp(); }
+        
+        function updateDisp() { 
+            const parts = calcVal.split(' ');
+            const formatted = parts.map(p => {
+                if(!isNaN(p) && p !== "") return Number(p).toLocaleString();
+                return p;
+            }).join(' ');
+            document.getElementById('calc-display').innerText = formatted || "0"; 
+        }
+
+        function calcEq() { 
+            try { 
+                let res = eval(calcVal);
+                calcVal = res.toString(); 
+                updateDisp(); 
+            } catch { 
+                calcVal = "Error"; updateDisp(); calcVal = ""; 
+            } 
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
+            if (e.key >= '0' && e.key <= '9') calcNum(e.key);
+            if (['+', '-', '*', '/'].includes(e.key)) calcOp(e.key);
+            if (e.key === 'Enter') { e.preventDefault(); calcEq(); }
+            if (e.key === 'Backspace') { e.preventDefault(); calcClear(); }
+            if (e.key === '.') calcNum('.');
+        });
+
+        document.addEventListener('input', e => {
+            if (e.target.classList.contains('amt-input')) {
+                let val = e.target.value.replace(/,/g, '');
+                if(!isNaN(val) && val !== "") {
+                    e.target.value = Number(val).toLocaleString();
+                }
+            }
+        });
+
+        // --- GRADING ---
+        function grade() {
+            if(isComplete) { 
+                applyNewProblem();
+                return; 
+            }
+            attemptCount++;
+
+            const fields = [
+                { id: 'ans-col-april', val: scenario.colFromApril, tolerance: 10 },
+                { id: 'ans-col-may', val: scenario.colFromMay, tolerance: 10 },
+                { id: 'ans-total-collections', val: scenario.totalCollections, tolerance: 10 },
+                { id: 'ans-beg-cash', val: scenario.begCash, tolerance: 10 },
+                { id: 'ans-total-available', val: scenario.totalAvailable, tolerance: 10 },
+                { id: 'ans-pay-april', val: scenario.payFromApril, tolerance: 10 },
+                { id: 'ans-pay-may', val: scenario.payFromMay, tolerance: 10 },
+                { id: 'ans-total-dm-disb', val: scenario.totalDMDisb, tolerance: 10 },
+                { id: 'ans-disb-dl', val: scenario.mayDL, tolerance: 10 },
+                { id: 'ans-disb-moh', val: scenario.mayMOH, tolerance: 10 },
+                { id: 'ans-disb-sa', val: scenario.maySA, tolerance: 10 },
+                { id: 'ans-disb-equip', val: scenario.mayEquip, tolerance: 10 },
+                { id: 'ans-total-disb', val: scenario.totalDisb, tolerance: 10 },
+                { id: 'ans-excess', val: scenario.excess, tolerance: 10 },
+                { id: 'ans-borrowing', val: scenario.borrowing, tolerance: 10 },
+                { id: 'ans-end-cash', val: scenario.endCash, tolerance: 10 }
+            ];
+
+            let correctCount = 0;
+            const totalComponents = fields.length;
+
+            fields.forEach(f => {
+                const el = document.getElementById(f.id);
+                const studentVal = parseFloat(el.value.replace(/,/g, '')) || 0;
+
+                el.classList.remove('correct', 'incorrect');
+                if (Math.abs(studentVal - f.val) <= f.tolerance) {
+                    el.classList.add('correct');
+                    el.disabled = true;
+                    correctCount++;
+                } else if (el.value !== "") {
+                    el.classList.add('incorrect');
+                }
+            });
+
+            const score = Math.round((correctCount / totalComponents) * 100);
+
+            const hBody = document.getElementById('history-body');
+            if(attemptCount === 1) hBody.innerHTML = "";
+            hBody.innerHTML = `<tr><td>${attemptCount}</td><td>${correctCount} / ${totalComponents}</td><td>${score}%</td></tr>` + hBody.innerHTML;
+
+            const btn = document.getElementById('submit-btn');
+            if(score === 100) {
+                isComplete = true;
+                btn.textContent = "Great Job! Generate New Problem";
+                btn.style.backgroundColor = "var(--success)";
+            } else {
+                btn.textContent = "Try Again - Fix Your Errors";
+            }
+        }
+
+        document.getElementById('submit-btn').onclick = grade;
+        setup();
+    </script>
+</body>
+</html>
