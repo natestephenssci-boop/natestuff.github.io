@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decision Cost Classification Challenge</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #2980b9;
+            --light-bg: #f8f9fa;
+            --success: #27ae60;
+            --error: #c0392b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 { color: var(--primary-color); text-align: center; margin-top: 10px; }
+        .instruction { text-align: center; font-size: 0.95em; max-width: 1050px; margin: 0 auto 15px; line-height: 1.45; }
+
+        #tracker-container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--accent-color);
+            box-sizing: border-box;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .history-table th { background: #eee; padding: 8px; border-bottom: 2px solid var(--accent-color); }
+        .history-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+
+        .main-layout {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .scenario-table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-top: 10px; }
+        .scenario-table th { background: var(--primary-color); color: white; padding: 10px; text-align: left; }
+        .scenario-table td { padding: 12px 10px; border-bottom: 1px solid #ddd; vertical-align: middle; }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(170px, 1fr));
+            gap: 8px 14px;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            background: #fffdf6;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.88em;
+            font-weight: 600;
+            color: #2c3e50;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--accent-color);
+        }
+
+        .correct { background-color: #e6ffe6 !important; border-color: var(--success) !important; }
+        .incorrect { background-color: #ffe6e6 !important; border-color: var(--error) !important; }
+
+        .feedback-note {
+            font-size: 0.8em;
+            margin-top: 6px;
+            font-weight: 600;
+            color: var(--error);
+        }
+
+        #submit-btn {
+            display: block; width: 100%; max-width: 360px; margin: 25px auto 10px; padding: 15px;
+            background-color: var(--primary-color); color: white; border: none; border-radius: 6px;
+            font-size: 1.1em; font-weight: bold; cursor: pointer;
+        }
+        #submit-btn:hover { background: #34495e; }
+
+        @media (max-width: 760px) {
+            .scenario-table thead { display: none; }
+            .scenario-table, .scenario-table tbody, .scenario-table tr, .scenario-table td { display: block; width: 100%; box-sizing: border-box; }
+            .scenario-table tr { margin-bottom: 16px; border: 1px solid #ccc; border-radius: 6px; }
+            .checkbox-group { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Decision Cost Classification Challenge</h1>
+    <p class="instruction">
+        Read each of the <strong>8 cost scenarios</strong> below and select <strong>all</strong> cost classifications that apply: <strong>Sunk Cost</strong>, <strong>Opportunity Cost</strong>, <strong>Avoidable Cost</strong>, or <strong>Unavoidable Cost</strong>. A single scenario may have one or more applicable classifications.
+    </p>
+
+    <div id="tracker-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Attempt</th>
+                    <th>Scenarios Correct</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="3">Complete the 8 scenarios below to start tracking your progress.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="main-layout">
+        <h3 style="margin-top:0; color: var(--primary-color); text-align: center;">Cost Scenario Evaluation (8 Scenarios)</h3>
+        <table class="scenario-table">
+            <thead>
+                <tr>
+                    <th style="width: 54%;">Cost Scenario</th>
+                    <th style="width: 46%;">Applicable Cost Classification(s)</th>
+                </tr>
+            </thead>
+            <tbody id="scenario-tbody"></tbody>
+        </table>
+        <button id="submit-btn">Check My Work</button>
+    </div>
+
+    <script>
+        const categories = [
+            "Sunk Cost",
+            "Opportunity Cost",
+            "Avoidable Cost",
+            "Unavoidable Cost"
+        ];
+
+        const masterPool = [
+            {
+                desc: "Last month, the company paid $45,000 for specialized packaging molds that cannot be resold or modified for other products. The company is now deciding whether to discontinue Product Line X.",
+                answers: ["Sunk Cost", "Unavoidable Cost"]
+            },
+            {
+                desc: "The company is deciding whether to accept a special order that requires dedicating a machine for 10 days. Using the machine for this order prevents the company from earning $12,000 in contribution margin on another job.",
+                answers: ["Opportunity Cost"]
+            },
+            {
+                desc: "The company can eliminate a part-time quality inspector's $3,800 monthly salary if it shuts down its night shift.",
+                answers: ["Avoidable Cost"]
+            },
+            {
+                desc: "The company signed a non-cancelable 5-year lease on a regional warehouse requiring $8,000 per month in rent. Management is evaluating whether to close the warehouse next month.",
+                answers: ["Unavoidable Cost"]
+            },
+            {
+                desc: "Six months ago, the company spent $22,000 on market research for a product launch that has not yet occurred. Management is now deciding whether to cancel the launch.",
+                answers: ["Sunk Cost", "Unavoidable Cost"]
+            },
+            {
+                desc: "By choosing to hold $100,000 in a non-interest-bearing checking account rather than investing it in a 5% money market fund, the company foregoes $5,000 in annual interest income.",
+                answers: ["Opportunity Cost"]
+            },
+            {
+                desc: "The company spends $1,400 per month on a monthly software subscription used exclusively by a division that management is considering closing next month.",
+                answers: ["Avoidable Cost"]
+            },
+            {
+                desc: "The company already purchased $18,000 of custom-printed boxes with an old company logo that is no longer used and has zero scrap value. Management is deciding how to package current shipments.",
+                answers: ["Sunk Cost", "Unavoidable Cost"]
+            },
+            {
+                desc: "A delivery truck could be rented out to a third party for $2,500 this month, or used internally to transport inventory for a proposed promotion.",
+                answers: ["Opportunity Cost"]
+            },
+            {
+                desc: "A company pays $6,200 per month in hourly wages to assembly workers who can be reassigned or laid off if a specific product line is discontinued.",
+                answers: ["Avoidable Cost"]
+            },
+            {
+                desc: "The company's corporate headquarters incurs $15,000 per month in property taxes that will continue unchanged regardless of whether Product A is manufactured.",
+                answers: ["Unavoidable Cost"]
+            },
+            {
+                desc: "Last year, the company spent $60,000 developing a proprietary mobile app that was never released and has no resale value. Management is now deciding on next year's IT budget.",
+                answers: ["Sunk Cost", "Unavoidable Cost"]
+            }
+        ];
+
+        let currentScenarios = [];
+        let attemptCount = 0;
+        let isComplete = false;
+
+        function shuffle(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function setup() {
+            currentScenarios = shuffle(masterPool).slice(0, 8);
+            const tbody = document.getElementById('scenario-tbody');
+            tbody.innerHTML = "";
+
+            currentScenarios.forEach((item, idx) => {
+                let checkboxesHtml = categories.map((cat, cIdx) => {
+                    const cbId = `cb_${idx}_${cIdx}`;
+                    return `
+                        <label class="checkbox-label" for="${cbId}">
+                            <input type="checkbox" class="scenario-cb" id="${cbId}" data-row="${idx}" value="${cat}">
+                            <span>${cat}</span>
+                        </label>
+                    `;
+                }).join("");
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>#${idx + 1}:</strong> ${item.desc}<div class="feedback-note" id="note_${idx}"></div></td>
+                        <td>
+                            <div class="checkbox-group" id="group_${idx}">
+                                ${checkboxesHtml}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            isComplete = false;
+            attemptCount = 0;
+            document.getElementById('history-body').innerHTML = `<tr><td colspan="3">Complete the 8 scenarios below to start tracking your progress.</td></tr>`;
+            document.getElementById('submit-btn').textContent = "Check My Work";
+            document.getElementById('submit-btn').style.backgroundColor = "var(--primary-color)";
+        }
+
+        function arraysEqualSet(a, b) {
+            if (a.length !== b.length) return false;
+            const setA = new Set(a);
+            const setB = new Set(b);
+            if (setA.size !== setB.size) return false;
+            for (let val of setA) {
+                if (!setB.has(val)) return false;
+            }
+            return true;
+        }
+
+        function grade() {
+            if (isComplete) {
+                setup();
+                return;
+            }
+            attemptCount++;
+
+            let correctCount = 0;
+            const totalScenarios = currentScenarios.length;
+
+            currentScenarios.forEach((item, idx) => {
+                const groupEl = document.getElementById(`group_${idx}`);
+                const noteEl = document.getElementById(`note_${idx}`);
+                const checkedBoxes = Array.from(document.querySelectorAll(`.scenario-cb[data-row="${idx}"]:checked`));
+                const selectedValues = checkedBoxes.map(cb => cb.value);
+
+                groupEl.classList.remove('correct', 'incorrect');
+                noteEl.textContent = "";
+
+                if (arraysEqualSet(selectedValues, item.answers)) {
+                    groupEl.classList.add('correct');
+                    document.querySelectorAll(`.scenario-cb[data-row="${idx}"]`).forEach(cb => cb.disabled = true);
+                    correctCount++;
+                } else {
+                    groupEl.classList.add('incorrect');
+                    if (selectedValues.length === 0) {
+                        noteEl.textContent = "Select at least one classification.";
+                    } else {
+                        noteEl.textContent = "Check your selected cost categories for this scenario.";
+                    }
+                }
+            });
+
+            const score = Math.round((correctCount / totalScenarios) * 100);
+
+            const hBody = document.getElementById('history-body');
+            if (attemptCount === 1) hBody.innerHTML = "";
+            hBody.innerHTML = `<tr><td>${attemptCount}</td><td>${correctCount} / ${totalScenarios}</td><td>${score}%</td></tr>` + hBody.innerHTML;
+
+            const btn = document.getElementById('submit-btn');
+            if (score === 100) {
+                isComplete = true;
+                btn.textContent = "Great Job! Generate New Problem";
+                btn.style.backgroundColor = "var(--success)";
+            } else {
+                btn.textContent = "Try Again - Fix Your Errors";
+            }
+        }
+
+        document.getElementById('submit-btn').onclick = grade;
+        setup();
+    </script>
+</body>
+</html>
