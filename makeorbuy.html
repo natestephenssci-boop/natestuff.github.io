@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Make-or-Buy Decision Challenge</title>
+    <style>
+        :root {
+            --byuh-crimson: #9E1B34;
+            --byuh-gold: #AA800E;
+            --byuh-light-gold: #fcf8ec;
+            --success: #2e7d32;
+            --error: #c62828;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 { color: var(--byuh-crimson); text-align: center; margin-top: 10px; }
+        .instruction { text-align: center; font-size: 0.95em; max-width: 1200px; margin: 0 auto 15px; line-height: 1.45; }
+
+        #tracker-container {
+            width: 100%;
+            max-width: 1250px;
+            margin: 0 auto 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--byuh-gold);
+            box-sizing: border-box;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .history-table th { background: #eee; padding: 8px; border-bottom: 2px solid var(--byuh-gold); }
+        .history-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+
+        .main-layout {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 20px;
+            max-width: 1250px;
+            margin: 0 auto;
+            align-items: flex-start;
+        }
+
+        #scenario-container {
+            flex: 1.15;
+            min-width: 430px;
+            background: white;
+            border: 2px solid var(--byuh-gold);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        #journal-container-wrapper {
+            flex: 1.35;
+            min-width: 460px;
+            background: white;
+            border: 2px solid var(--byuh-crimson);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.88em; margin-top: 10px; margin-bottom: 15px; }
+        .data-table th { background: var(--byuh-crimson); color: white; padding: 8px 6px; text-align: center; }
+        .data-table td { padding: 8px; border-bottom: 1px solid #ddd; vertical-align: middle; }
+        .data-num { text-align: right; font-family: monospace; }
+
+        .note-box {
+            background: var(--byuh-light-gold);
+            border-left: 4px solid var(--byuh-gold);
+            padding: 10px 12px;
+            font-size: 0.86em;
+            line-height: 1.45;
+            border-radius: 4px;
+        }
+
+        #right-column {
+            width: 320px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: sticky;
+            top: 20px;
+        }
+
+        .journal-table { width: 100%; border-collapse: collapse; }
+        .journal-table th { background-color: var(--byuh-crimson); color: white; padding: 10px; font-size: 0.8em; text-transform: uppercase; }
+        .journal-table td { padding: 8px 6px; border: 1px solid #ddd; font-size: 0.9em; vertical-align: middle; }
+
+        .amt-input, .decision-select {
+            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;
+            font-size: 0.95em; font-family: monospace; text-align: right; background: #fffdf4;
+        }
+
+        .decision-select {
+            font-family: inherit;
+            text-align: left;
+            font-weight: bold;
+            color: var(--byuh-crimson);
+            cursor: pointer;
+        }
+
+        /* --- Calculator Styling --- */
+        #calc-container {
+            width: 100%; background: #333; color: white; padding: 15px; border-radius: 8px;
+            box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        #calc-display {
+            width: 100%; background: #222; color: #0f0; text-align: right; padding: 10px; box-sizing: border-box;
+            font-family: 'Courier New', monospace; font-size: 1.2em; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; min-height: 44px;
+        }
+
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .calc-grid button { padding: 12px 0; cursor: pointer; border: none; border-radius: 4px; background: #555; color: white; font-weight: bold; font-size: 1em; }
+        .calc-grid button:hover { background: var(--byuh-gold); color: #333; }
+        .calc-grid .btn-op { background: var(--byuh-gold); color: #333; }
+
+        .correct { background-color: #e6ffe6 !important; border-color: var(--success) !important; }
+        .incorrect { background-color: #ffe6e6 !important; border-color: var(--error) !important; }
+
+        #submit-btn {
+            display: block; width: 100%; max-width: 400px; margin: 15px auto 10px; padding: 15px;
+            background-color: var(--byuh-crimson); color: white; border: none; border-radius: 6px;
+            font-size: 1.1em; font-weight: bold; cursor: pointer;
+        }
+        #submit-btn:hover { background: #6b1223; }
+
+        @media (max-width: 1200px) {
+            .main-layout { flex-direction: column; align-items: stretch; }
+            #right-column { width: 100%; position: relative; top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Make-or-Buy Decision Challenge</h1>
+    <p class="instruction">
+        Analyze the annual manufacturing cost data and outside supplier quote on the left. Determine the <strong>relevant unit cost to make</strong>, <strong>total relevant cost to make</strong>, <strong>total cost to buy</strong>, <strong>net financial advantage</strong> of the preferred alternative, and the <strong>best decision</strong>. Use the floating calculator on the far right as needed.
+    </p>
+
+    <div id="tracker-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Attempt</th>
+                    <th>Components Correct</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="3">Complete the analysis below to start tracking your progress.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="main-layout">
+        <!-- Data Provided (Left) -->
+        <div id="scenario-container">
+            <h3 style="text-align: center; color: var(--byuh-crimson); margin-top:0;">Component Cost & Supplier Data</h3>
+            <table class="data-table" id="mob-data-view"></table>
+            <div class="note-box" id="mob-note-view"></div>
+        </div>
+
+        <!-- Student Tasks (Center) -->
+        <div id="journal-container-wrapper">
+            <h3 style="text-align: center; color: var(--byuh-crimson); margin-top:0;">Student Make-or-Buy Analysis</h3>
+            <table class="journal-table">
+                <thead>
+                    <tr><th style="width: 66%;">Analysis Metric / Decision</th><th style="width: 34%;">Answer</th></tr>
+                </thead>
+                <tbody id="journal-body">
+                    <tr style="background:#eee;"><td colspan="2"><strong style="color:var(--byuh-crimson);">1. Relevant Cost Comparison</strong></td></tr>
+                    <tr>
+                        <td>Relevant Manufacturing Cost per Unit ($/unit)</td>
+                        <td><input type="text" class="amt-input" id="ans-rel-unit" placeholder="0.00"></td>
+                    </tr>
+                    <tr>
+                        <td>Total Relevant Cost to MAKE ($)</td>
+                        <td><input type="text" class="amt-input" id="ans-total-make" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td>Total Cost to BUY from Outside Supplier ($)</td>
+                        <td><input type="text" class="amt-input" id="ans-total-buy" placeholder="0"></td>
+                    </tr>
+
+                    <tr style="background:#eee;"><td colspan="2"><strong style="color:var(--byuh-crimson);">2. Net Advantage & Recommendation</strong></td></tr>
+                    <tr>
+                        <td>Net Cost Savings / Advantage of Best Option ($)</td>
+                        <td><input type="text" class="amt-input" id="ans-savings" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Recommended Decision</strong></td>
+                        <td>
+                            <select class="decision-select" id="ans-decision">
+                                <option value="">-- Select Decision --</option>
+                                <option value="Make">Make the Component</option>
+                                <option value="Buy">Buy from Outside Supplier</option>
+                            </select>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <button id="submit-btn">Check My Work</button>
+        </div>
+
+        <!-- Floating Calculator (Far Right) -->
+        <div id="right-column">
+            <div id="calc-container">
+                <div id="calc-display">0</div>
+                <div class="calc-grid">
+                    <button onclick="calcClear()">C</button>
+                    <button onclick="calcOp('/')" class="btn-op">÷</button>
+                    <button onclick="calcOp('*')" class="btn-op">×</button>
+                    <button onclick="calcClear()">Del</button>
+                    <button onclick="calcNum('7')">7</button><button onclick="calcNum('8')">8</button><button onclick="calcNum('9')">9</button>
+                    <button onclick="calcOp('-')" class="btn-op">−</button>
+                    <button onclick="calcNum('4')">4</button><button onclick="calcNum('5')">5</button><button onclick="calcNum('6')">6</button>
+                    <button onclick="calcOp('+')" class="btn-op">+</button>
+                    <button onclick="calcNum('1')">1</button><button onclick="calcNum('2')">2</button><button onclick="calcNum('3')">3</button>
+                    <button onclick="calcEq()" style="grid-row: span 2; background: var(--byuh-crimson);">=</button>
+                    <button onclick="calcNum('0')" style="grid-column: span 2;">0</button><button onclick="calcNum('.')">.</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scenario = {};
+        let attemptCount = 0;
+        let isComplete = false;
+
+        function rand(min, max) { return Math.floor(Math.random() * (max - min + 1) + min); }
+
+        function setup() {
+            if (!scenario.units) {
+                let units = rand(4, 10) * 1000;          // e.g., 6,000 units per year
+                let dmUnit = rand(12, 24);              // e.g., $18.00 per unit
+                let dlUnit = rand(8, 16);               // e.g., $11.00 per unit
+                let varMOHUnit = rand(4, 10);           // e.g., $6.00 per unit
+                let avoidableFixedTotal = rand(15, 35) * 1000; // e.g., $24,000 avoidable fixed MOH
+                let unavoidableFixedTotal = rand(20, 45) * 1000; // e.g., $30,000 unavoidable fixed MOH
+
+                let avoidableFixedUnit = avoidableFixedTotal / units;
+                let relevantUnitCost = dmUnit + dlUnit + varMOHUnit + avoidableFixedUnit;
+                let totalMakeCost = relevantUnitCost * units;
+
+                // Outside purchase price per unit chosen so Make vs Buy varies across attempts
+                let deltaUnit = rand(-5, 6);
+                if (deltaUnit === 0) deltaUnit = 3;
+                let buyPriceUnit = Math.max(10, Math.round(relevantUnitCost + deltaUnit));
+                let totalBuyCost = buyPriceUnit * units;
+
+                let savings = Math.abs(totalMakeCost - totalBuyCost);
+                let bestDecision = totalMakeCost <= totalBuyCost ? "Make" : "Buy";
+
+                scenario = {
+                    units,
+                    dmUnit,
+                    dlUnit,
+                    varMOHUnit,
+                    avoidableFixedTotal,
+                    unavoidableFixedTotal,
+                    relevantUnitCost,
+                    totalMakeCost,
+                    buyPriceUnit,
+                    totalBuyCost,
+                    savings,
+                    bestDecision
+                };
+            }
+
+            document.getElementById('mob-data-view').innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Cost / Production Factor</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Annual Component Requirement</td><td class="data-num">${scenario.units.toLocaleString()} units</td></tr>
+                    <tr><td>Direct Materials per Unit</td><td class="data-num">$${scenario.dmUnit.toFixed(2)}</td></tr>
+                    <tr><td>Direct Labor per Unit</td><td class="data-num">$${scenario.dlUnit.toFixed(2)}</td></tr>
+                    <tr><td>Variable Manufacturing Overhead per Unit</td><td class="data-num">$${scenario.varMOHUnit.toFixed(2)}</td></tr>
+                    <tr><td>Avoidable Fixed Manufacturing Overhead (Annual)</td><td class="data-num">$${scenario.avoidableFixedTotal.toLocaleString()}</td></tr>
+                    <tr><td>Unavoidable Fixed Manufacturing Overhead (Annual)</td><td class="data-num">$${scenario.unavoidableFixedTotal.toLocaleString()}</td></tr>
+                    <tr><td>Outside Supplier Purchase Price per Unit</td><td class="data-num">$${scenario.buyPriceUnit.toFixed(2)}</td></tr>
+                </tbody>
+            `;
+
+            document.getElementById('mob-note-view').innerHTML = `
+                <strong>Decision Context:</strong> Unavoidable fixed overhead will continue regardless of whether the component is made internally or purchased externally, and the freed facility space has no alternative income-producing use.
+            `;
+
+            document.querySelectorAll('.amt-input').forEach(input => {
+                input.value = "";
+                input.disabled = false;
+                input.classList.remove('correct', 'incorrect');
+            });
+
+            const sel = document.getElementById('ans-decision');
+            sel.value = "";
+            sel.disabled = false;
+            sel.classList.remove('correct', 'incorrect');
+        }
+
+        function applyNewProblem() {
+            isComplete = false;
+            attemptCount = 0;
+            scenario = {};
+            document.getElementById('history-body').innerHTML = `<tr><td colspan="3">Complete the analysis below to start tracking your progress.</td></tr>`;
+            document.getElementById('submit-btn').textContent = "Check My Work";
+            document.getElementById('submit-btn').style.backgroundColor = "var(--byuh-crimson)";
+            setup();
+        }
+
+        // --- CALCULATOR & KEYBOARD ---
+        let calcVal = "";
+        function calcNum(n) { calcVal += n; updateDisp(); }
+        function calcOp(op) { calcVal += " " + op + " "; updateDisp(); }
+        function calcClear() { calcVal = ""; updateDisp(); }
+
+        function updateDisp() {
+            const parts = calcVal.split(' ');
+            const formatted = parts.map(p => {
+                if(!isNaN(p) && p !== "") return Number(p).toLocaleString();
+                return p;
+            }).join(' ');
+            document.getElementById('calc-display').innerText = formatted || "0";
+        }
+
+        function calcEq() {
+            try {
+                let res = eval(calcVal);
+                calcVal = res.toString();
+                updateDisp();
+            } catch {
+                calcVal = "Error"; updateDisp(); calcVal = "";
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
+            if (e.key >= '0' && e.key <= '9') calcNum(e.key);
+            if (['+', '-', '*', '/'].includes(e.key)) calcOp(e.key);
+            if (e.key === 'Enter') { e.preventDefault(); calcEq(); }
+            if (e.key === 'Backspace') { e.preventDefault(); calcClear(); }
+            if (e.key === '.') calcNum('.');
+        });
+
+        document.addEventListener('input', e => {
+            if (e.target.classList.contains('amt-input')) {
+                let val = e.target.value.replace(/,/g, '');
+                if(!isNaN(val) && val !== "") {
+                    if(val.includes('.')) {
+                        let parts = val.split('.');
+                        e.target.value = Number(parts[0]).toLocaleString() + '.' + parts[1];
+                    } else {
+                        e.target.value = Number(val).toLocaleString();
+                    }
+                }
+            }
+        });
+
+        // --- GRADING ---
+        function grade() {
+            if(isComplete) {
+                applyNewProblem();
+                return;
+            }
+            attemptCount++;
+
+            const fields = [
+                { id: 'ans-rel-unit', val: scenario.relevantUnitCost, tolerance: 0.1 },
+                { id: 'ans-total-make', val: scenario.totalMakeCost, tolerance: 10 },
+                { id: 'ans-total-buy', val: scenario.totalBuyCost, tolerance: 10 },
+                { id: 'ans-savings', val: scenario.savings, tolerance: 10 }
+            ];
+
+            let correctCount = 0;
+            const totalComponents = fields.length + 1;
+
+            fields.forEach(f => {
+                const el = document.getElementById(f.id);
+                const studentVal = parseFloat(el.value.replace(/,/g, '')) || 0;
+
+                el.classList.remove('correct', 'incorrect');
+                if (Math.abs(studentVal - f.val) <= f.tolerance) {
+                    el.classList.add('correct');
+                    el.disabled = true;
+                    correctCount++;
+                } else if (el.value !== "") {
+                    el.classList.add('incorrect');
+                }
+            });
+
+            const decEl = document.getElementById('ans-decision');
+            decEl.classList.remove('correct', 'incorrect');
+            if (decEl.value === scenario.bestDecision) {
+                decEl.classList.add('correct');
+                decEl.disabled = true;
+                correctCount++;
+            } else if (decEl.value !== "") {
+                decEl.classList.add('incorrect');
+            }
+
+            const score = Math.round((correctCount / totalComponents) * 100);
+
+            const hBody = document.getElementById('history-body');
+            if(attemptCount === 1) hBody.innerHTML = "";
+            hBody.innerHTML = `<tr><td>${attemptCount}</td><td>${correctCount} / ${totalComponents}</td><td>${score}%</td></tr>` + hBody.innerHTML;
+
+            const btn = document.getElementById('submit-btn');
+            if(score === 100) {
+                isComplete = true;
+                btn.textContent = "Great Job! Generate New Problem";
+                btn.style.backgroundColor = "var(--success)";
+            } else {
+                btn.textContent = "Try Again - Fix Your Errors";
+            }
+        }
+
+        document.getElementById('submit-btn').onclick = grade;
+        setup();
+    </script>
+</body>
+</html>
