@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sell or Process Further Challenge (Apples) - BYU-Hawaii</title>
+    <style>
+        :root {
+            --byuh-crimson: #9E1B34;
+            --byuh-gold: #AA800E;
+            --byuh-light-gold: #fcf8ec;
+            --success: #2e7d32;
+            --error: #c62828;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 { color: var(--byuh-crimson); text-align: center; margin-top: 10px; }
+        .instruction { text-align: center; font-size: 0.95em; max-width: 1200px; margin: 0 auto 15px; line-height: 1.45; }
+
+        #tracker-container {
+            width: 100%;
+            max-width: 1250px;
+            margin: 0 auto 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--byuh-gold);
+            box-sizing: border-box;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .history-table th { background: #eee; padding: 8px; border-bottom: 2px solid var(--byuh-gold); }
+        .history-table td { padding: 6px; border-bottom: 1px solid #ddd; }
+
+        .main-layout {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 20px;
+            max-width: 1250px;
+            margin: 0 auto;
+            align-items: flex-start;
+        }
+
+        #scenario-container {
+            flex: 1.15;
+            min-width: 430px;
+            background: white;
+            border: 2px solid var(--byuh-gold);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        #journal-container-wrapper {
+            flex: 1.35;
+            min-width: 460px;
+            background: white;
+            border: 2px solid var(--byuh-crimson);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.88em; margin-top: 10px; margin-bottom: 15px; }
+        .data-table th { background: var(--byuh-crimson); color: white; padding: 8px 6px; text-align: center; }
+        .data-table td { padding: 8px; border-bottom: 1px solid #ddd; vertical-align: middle; }
+        .data-num { text-align: right; font-family: monospace; }
+
+        .note-box {
+            background: var(--byuh-light-gold);
+            border-left: 4px solid var(--byuh-gold);
+            padding: 10px 12px;
+            font-size: 0.86em;
+            line-height: 1.45;
+            border-radius: 4px;
+        }
+
+        #right-column {
+            width: 320px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: sticky;
+            top: 20px;
+        }
+
+        .journal-table { width: 100%; border-collapse: collapse; }
+        .journal-table th { background-color: var(--byuh-crimson); color: white; padding: 10px; font-size: 0.8em; text-transform: uppercase; }
+        .journal-table td { padding: 8px 6px; border: 1px solid #ddd; font-size: 0.9em; vertical-align: middle; }
+
+        .amt-input, .decision-select {
+            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;
+            font-size: 0.95em; font-family: monospace; text-align: right; background: #fffdf4;
+        }
+
+        .decision-select {
+            font-family: inherit;
+            text-align: left;
+            font-weight: bold;
+            color: var(--byuh-crimson);
+            cursor: pointer;
+        }
+
+        /* --- Calculator Styling --- */
+        #calc-container {
+            width: 100%; background: #333; color: white; padding: 15px; border-radius: 8px;
+            box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        #calc-display {
+            width: 100%; background: #222; color: #0f0; text-align: right; padding: 10px; box-sizing: border-box;
+            font-family: 'Courier New', monospace; font-size: 1.2em; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; min-height: 44px;
+        }
+
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .calc-grid button { padding: 12px 0; cursor: pointer; border: none; border-radius: 4px; background: #555; color: white; font-weight: bold; font-size: 1em; }
+        .calc-grid button:hover { background: var(--byuh-gold); color: #333; }
+        .calc-grid .btn-op { background: var(--byuh-gold); color: #333; }
+
+        .correct { background-color: #e6ffe6 !important; border-color: var(--success) !important; }
+        .incorrect { background-color: #ffe6e6 !important; border-color: var(--error) !important; }
+
+        #submit-btn {
+            display: block; width: 100%; max-width: 400px; margin: 15px auto 10px; padding: 15px;
+            background-color: var(--byuh-crimson); color: white; border: none; border-radius: 6px;
+            font-size: 1.1em; font-weight: bold; cursor: pointer;
+        }
+        #submit-btn:hover { background: #6b1223; }
+
+        @media (max-width: 1200px) {
+            .main-layout { flex-direction: column; align-items: stretch; }
+            #right-column { width: 100%; position: relative; top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Sell or Process Further Challenge: Fresh-Picked Apples</h1>
+    <p class="instruction">
+        Review the harvest and processing figures for our <strong>fresh-picked apples</strong> on the left. Compute the revenue from selling whole apples now, the revenue from processing them further into bottled apple cider, the incremental revenue, the incremental processing cost, the net gain or loss from processing further, and your final decision. Use the floating calculator on the far right as needed.
+    </p>
+
+    <div id="tracker-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Attempt</th>
+                    <th>Components Correct</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="3">Complete the calculations below to start tracking your progress.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="main-layout">
+        <!-- Data Provided (Left) -->
+        <div id="scenario-container">
+            <h3 style="text-align: center; color: var(--byuh-crimson); margin-top:0;">Apple Harvest & Cider Processing Data</h3>
+            <table class="data-table" id="apple-data-view"></table>
+            <div class="note-box" id="apple-note-view"></div>
+        </div>
+
+        <!-- Student Tasks (Center) -->
+        <div id="journal-container-wrapper">
+            <h3 style="text-align: center; color: var(--byuh-crimson); margin-top:0;">Student Sell-or-Process-Further Analysis</h3>
+            <table class="journal-table">
+                <thead>
+                    <tr><th style="width: 66%;">Decision Metric / Choice</th><th style="width: 34%;">Answer</th></tr>
+                </thead>
+                <tbody id="journal-body">
+                    <tr style="background:#eee;"><td colspan="2"><strong style="color:var(--byuh-crimson);">1. Revenue & Cost Comparison</strong></td></tr>
+                    <tr>
+                        <td>Revenue from Selling Fresh-Picked Apples Now ($)</td>
+                        <td><input type="text" class="amt-input" id="ans-rev-sell" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td>Revenue from Processing Further into Cider ($)</td>
+                        <td><input type="text" class="amt-input" id="ans-rev-process" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td>Incremental Revenue from Processing Further ($)</td>
+                        <td><input type="text" class="amt-input" id="ans-inc-rev" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td>Incremental Cost of Processing Further ($)</td>
+                        <td><input type="text" class="amt-input" id="ans-inc-cost" placeholder="0"></td>
+                    </tr>
+
+                    <tr style="background:#eee;"><td colspan="2"><strong style="color:var(--byuh-crimson);">2. Net Impact & Decision</strong></td></tr>
+                    <tr>
+                        <td>Net Gain (Loss) from Processing Further ($)<br><span style="font-size:0.78em; color:#666;">(Enter negative with a minus sign if a net loss)</span></td>
+                        <td><input type="text" class="amt-input" id="ans-net-impact" placeholder="0"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Recommended Decision</strong></td>
+                        <td>
+                            <select class="decision-select" id="ans-decision">
+                                <option value="">-- Select Decision --</option>
+                                <option value="Sell Now">Sell Fresh-Picked Apples Now</option>
+                                <option value="Process Further">Process Further into Cider</option>
+                            </select>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <button id="submit-btn">Check My Work</button>
+        </div>
+
+        <!-- Floating Calculator (Far Right) -->
+        <div id="right-column">
+            <div id="calc-container">
+                <div id="calc-display">0</div>
+                <div class="calc-grid">
+                    <button onclick="calcClear()">C</button>
+                    <button onclick="calcOp('/')" class="btn-op">÷</button>
+                    <button onclick="calcOp('*')" class="btn-op">×</button>
+                    <button onclick="calcClear()">Del</button>
+                    <button onclick="calcNum('7')">7</button><button onclick="calcNum('8')">8</button><button onclick="calcNum('9')">9</button>
+                    <button onclick="calcOp('-')" class="btn-op">−</button>
+                    <button onclick="calcNum('4')">4</button><button onclick="calcNum('5')">5</button><button onclick="calcNum('6')">6</button>
+                    <button onclick="calcOp('+')" class="btn-op">+</button>
+                    <button onclick="calcNum('1')">1</button><button onclick="calcNum('2')">2</button><button onclick="calcNum('3')">3</button>
+                    <button onclick="calcEq()" style="grid-row: span 2; background: var(--byuh-crimson);">=</button>
+                    <button onclick="calcNum('0')" style="grid-column: span 2;">0</button><button onclick="calcNum('.')">.</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scenario = {};
+        let attemptCount = 0;
+        let isComplete = false;
+
+        function rand(min, max) { return Math.floor(Math.random() * (max - min + 1) + min); }
+
+        function setup() {
+            if (!scenario.appleBoxes) {
+                let appleBoxes = rand(15, 35) * 100;             // e.g., 2,000 boxes of fresh-picked apples
+                let jointHarvestCost = rand(12, 25) * 1000;    // e.g., $18,000 sunk joint growing & picking cost
+                let sellPriceBox = rand(14, 24);               // e.g., $18.00 per box sold as-is
+
+                let ciderGallonsPerBox = rand(2, 4);           // e.g., 3 gallons of cider per box of apples
+                let ciderPriceGal = rand(7, 13);               // e.g., $9.00 per gallon of cider
+                let varProcessCostGal = rand(2, 5);            // e.g., $3.00 variable pressing/bottling cost per gallon
+                let fixedProcessCost = rand(2, 7) * 1000;      // e.g., $4,000 additional fixed cider equipment/bottling cost
+
+                let revSellNow = appleBoxes * sellPriceBox;
+                let totalCiderGallons = appleBoxes * ciderGallonsPerBox;
+                let revProcessFurther = totalCiderGallons * ciderPriceGal;
+                let incRevenue = revProcessFurther - revSellNow;
+
+                let incCost = (totalCiderGallons * varProcessCostGal) + fixedProcessCost;
+                let netImpact = incRevenue - incCost;
+                let bestDecision = netImpact >= 0 ? "Process Further" : "Sell Now";
+
+                scenario = {
+                    appleBoxes,
+                    jointHarvestCost,
+                    sellPriceBox,
+                    ciderGallonsPerBox,
+                    totalCiderGallons,
+                    ciderPriceGal,
+                    varProcessCostGal,
+                    fixedProcessCost,
+                    revSellNow,
+                    revProcessFurther,
+                    incRevenue,
+                    incCost,
+                    netImpact,
+                    bestDecision
+                };
+            }
+
+            document.getElementById('apple-data-view').innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Harvest & Processing Factor</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Fresh-Picked Apples Available</td><td class="data-num">${scenario.appleBoxes.toLocaleString()} boxes</td></tr>
+                    <tr><td>Joint Growing & Picking Cost (Incurred to Date)</td><td class="data-num">$${scenario.jointHarvestCost.toLocaleString()}</td></tr>
+                    <tr><td>Selling Price per Box (Fresh-Picked Apples Now)</td><td class="data-num">$${scenario.sellPriceBox.toFixed(2)} / box</td></tr>
+                    <tr><td>Cider Yield per Box of Apples</td><td class="data-num">${scenario.ciderGallonsPerBox} gallons / box</td></tr>
+                    <tr><td>Selling Price per Gallon (Bottled Cider)</td><td class="data-num">$${scenario.ciderPriceGal.toFixed(2)} / gal</td></tr>
+                    <tr><td>Variable Pressing & Bottling Cost</td><td class="data-num">$${scenario.varProcessCostGal.toFixed(2)} / gal</td></tr>
+                    <tr><td>Additional Fixed Processing Cost (Cider Line)</td><td class="data-num">$${scenario.fixedProcessCost.toLocaleString()}</td></tr>
+                </tbody>
+            `;
+
+            document.getElementById('apple-note-view').innerHTML = `
+                <strong>Decision Note:</strong> Joint growing and picking costs have already been incurred and are irrelevant to the choice between selling fresh-picked apples now and pressing them into cider.
+            `;
+
+            document.querySelectorAll('.amt-input').forEach(input => {
+                input.value = "";
+                input.disabled = false;
+                input.classList.remove('correct', 'incorrect');
+            });
+
+            const sel = document.getElementById('ans-decision');
+            sel.value = "";
+            sel.disabled = false;
+            sel.classList.remove('correct', 'incorrect');
+        }
+
+        function applyNewProblem() {
+            isComplete = false;
+            attemptCount = 0;
+            scenario = {};
+            document.getElementById('history-body').innerHTML = `<tr><td colspan="3">Complete the calculations below to start tracking your progress.</td></tr>`;
+            document.getElementById('submit-btn').textContent = "Check My Work";
+            document.getElementById('submit-btn').style.backgroundColor = "var(--byuh-crimson)";
+            setup();
+        }
+
+        // --- CALCULATOR & KEYBOARD ---
+        let calcVal = "";
+        function calcNum(n) { calcVal += n; updateDisp(); }
+        function calcOp(op) { calcVal += " " + op + " "; updateDisp(); }
+        function calcClear() { calcVal = ""; updateDisp(); }
+
+        function updateDisp() {
+            const parts = calcVal.split(' ');
+            const formatted = parts.map(p => {
+                if(!isNaN(p) && p !== "") return Number(p).toLocaleString();
+                return p;
+            }).join(' ');
+            document.getElementById('calc-display').innerText = formatted || "0";
+        }
+
+        function calcEq() {
+            try {
+                let res = eval(calcVal);
+                calcVal = res.toString();
+                updateDisp();
+            } catch {
+                calcVal = "Error"; updateDisp(); calcVal = "";
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
+            if (e.key >= '0' && e.key <= '9') calcNum(e.key);
+            if (['+', '-', '*', '/'].includes(e.key)) calcOp(e.key);
+            if (e.key === 'Enter') { e.preventDefault(); calcEq(); }
+            if (e.key === 'Backspace') { e.preventDefault(); calcClear(); }
+            if (e.key === '.') calcNum('.');
+        });
+
+        document.addEventListener('input', e => {
+            if (e.target.classList.contains('amt-input')) {
+                let raw = e.target.value.replace(/,/g, '');
+                if (raw === '-' || raw === '') return;
+                let neg = raw.startsWith('-');
+                let clean = neg ? raw.slice(1) : raw;
+                if(!isNaN(clean) && clean !== "") {
+                    let formattedNum = clean.includes('.')
+                        ? Number(clean.split('.')[0]).toLocaleString() + '.' + clean.split('.')[1]
+                        : Number(clean).toLocaleString();
+                    e.target.value = (neg ? '-' : '') + formattedNum;
+                }
+            }
+        });
+
+        // --- GRADING ---
+        function grade() {
+            if(isComplete) {
+                applyNewProblem();
+                return;
+            }
+            attemptCount++;
+
+            const fields = [
+                { id: 'ans-rev-sell', val: scenario.revSellNow, tolerance: 10 },
+                { id: 'ans-rev-process', val: scenario.revProcessFurther, tolerance: 10 },
+                { id: 'ans-inc-rev', val: scenario.incRevenue, tolerance: 10 },
+                { id: 'ans-inc-cost', val: scenario.incCost, tolerance: 10 },
+                { id: 'ans-net-impact', val: scenario.netImpact, tolerance: 10 }
+            ];
+
+            let correctCount = 0;
+            const totalComponents = fields.length + 1;
+
+            fields.forEach(f => {
+                const el = document.getElementById(f.id);
+                const studentVal = parseFloat(el.value.replace(/,/g, ''));
+
+                el.classList.remove('correct', 'incorrect');
+                if (!isNaN(studentVal) && Math.abs(studentVal - f.val) <= f.tolerance) {
+                    el.classList.add('correct');
+                    el.disabled = true;
+                    correctCount++;
+                } else if (el.value.trim() !== "") {
+                    el.classList.add('incorrect');
+                }
+            });
+
+            const decEl = document.getElementById('ans-decision');
+            decEl.classList.remove('correct', 'incorrect');
+            if (decEl.value === scenario.bestDecision) {
+                decEl.classList.add('correct');
+                decEl.disabled = true;
+                correctCount++;
+            } else if (decEl.value !== "") {
+                decEl.classList.add('incorrect');
+            }
+
+            const score = Math.round((correctCount / totalComponents) * 100);
+
+            const hBody = document.getElementById('history-body');
+            if(attemptCount === 1) hBody.innerHTML = "";
+            hBody.innerHTML = `<tr><td>${attemptCount}</td><td>${correctCount} / ${totalComponents}</td><td>${score}%</td></tr>` + hBody.innerHTML;
+
+            const btn = document.getElementById('submit-btn');
+            if(score === 100) {
+                isComplete = true;
+                btn.textContent = "Great Job! Generate New Problem";
+                btn.style.backgroundColor = "var(--success)";
+            } else {
+                btn.textContent = "Try Again - Fix Your Errors";
+            }
+        }
+
+        document.getElementById('submit-btn').onclick = grade;
+        setup();
+    </script>
+</body>
+</html>
